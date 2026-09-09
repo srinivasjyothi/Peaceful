@@ -1,0 +1,2306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Maintenance">
+    <meta name="theme-color" content="#2563eb">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <link rel="icon" href="icon-192.png">
+    <title>Apartment Maintenance Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #f9fafb;
+            overscroll-behavior-y: contain;
+            padding-bottom: 80px;
+            min-height: 100vh;
+        }
+        
+        input, select, textarea, button {
+            font-size: 16px !important;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%);
+            color: white;
+            padding: 24px 16px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+        
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        .month-selector {
+            background: white;
+            padding: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .month-selector label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: #4b5563;
+            margin-bottom: 8px;
+        }
+        
+        .month-selector input {
+            width: 100%;
+            border: 2px solid #d1d5db;
+            border-radius: 8px;
+            padding: 12px;
+        }
+        
+        .content {
+            padding: 16px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        
+        .stat-card {
+            padding: 16px;
+            border-radius: 16px;
+            color: white;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+        
+        .stat-card:active {
+            transform: scale(0.98);
+        }
+        
+        .stat-card.green {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+        
+        .stat-card.red {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        }
+        
+        .stat-card.blue {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        }
+        
+        .stat-card.orange {
+            background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+        }
+        
+        .stat-card.purple {
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+        }
+        
+        .stat-card.full-width {
+            grid-column: 1 / -1;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            opacity: 0.9;
+            margin-bottom: 4px;
+        }
+        
+        .stat-value {
+            font-size: 28px;
+            font-weight: bold;
+        }
+        
+        .stat-detail {
+            font-size: 12px;
+            margin-top: 8px;
+            opacity: 0.9;
+        }
+        
+        .section {
+            background: white;
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        
+        .section-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #1f2937;
+            margin-bottom: 12px;
+        }
+        
+        .quick-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        
+        .action-btn {
+            padding: 16px;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .action-btn.green {
+            background: #10b981;
+        }
+        
+        .action-btn.red {
+            background: #ef4444;
+        }
+        
+        .action-btn.blue {
+            background: #3b82f6;
+        }
+        
+        .item-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .item {
+            background: #f9fafb;
+            padding: 12px;
+            border-radius: 12px;
+            margin-bottom: 8px;
+            cursor: pointer;
+        }
+        
+        .item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 8px;
+        }
+        
+        .item-title {
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 4px;
+        }
+        
+        .item-subtitle {
+            font-size: 14px;
+            color: #6b7280;
+        }
+        
+        .item-amount {
+            font-weight: bold;
+            color: #1f2937;
+        }
+        
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .status-badge.paid {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        
+        .status-badge.pending {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        
+        .status-badge.partial {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            border-top: 1px solid #e5e7eb;
+            padding: 8px;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 4px;
+            z-index: 50;
+        }
+        
+        .nav-btn {
+            background: none;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #6b7280;
+        }
+        
+        .nav-btn.active {
+            background: #dbeafe;
+            color: #2563eb;
+        }
+        
+        .nav-icon {
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+        
+        .nav-label {
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 100;
+        }
+        
+        .modal {
+            position: fixed;
+            inset: 0;
+            z-index: 101;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 24px 24px 0 0;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            position: sticky;
+            top: 0;
+            background: white;
+            border-bottom: 1px solid #e5e7eb;
+            padding: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+        }
+        
+        .modal-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #1f2937;
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 32px;
+            color: #6b7280;
+            cursor: pointer;
+            line-height: 1;
+        }
+        
+        .modal-body {
+            padding: 16px;
+        }
+        
+        .form-group {
+            margin-bottom: 16px;
+        }
+        
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 8px;
+        }
+        
+        .form-input, .form-select {
+            width: 100%;
+            border: 2px solid #d1d5db;
+            border-radius: 8px;
+            padding: 12px;
+        }
+        
+        .submit-btn {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+        }
+        
+        .empty-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+        
+        .empty-text {
+            color: #6b7280;
+            margin-bottom: 16px;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .category-tag {
+            display: inline-block;
+            padding: 4px 12px;
+            background: #dbeafe;
+            color: #1e40af;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-right: 8px;
+        }
+        
+        .vendor-tag {
+            display: inline-block;
+            padding: 4px 12px;
+            background: #f3f4f6;
+            color: #4b5563;
+            border-radius: 8px;
+            font-size: 12px;
+        }
+        
+        .edit-btn, .delete-btn {
+            font-size: 12px;
+            font-weight: 600;
+            background: none;
+            border: none;
+            cursor: pointer;
+            margin-top: 4px;
+            margin-right: 12px;
+        }
+        
+        .edit-btn {
+            color: #3b82f6;
+        }
+        
+        .delete-btn {
+            color: #ef4444;
+        }
+        
+        .item-footer {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        
+        .balance-card {
+            background: #f9fafb;
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 8px;
+        }
+        
+        .balance-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+        }
+        
+        .balance-label {
+            font-size: 14px;
+            color: #6b7280;
+        }
+        
+        .balance-value {
+            font-weight: 600;
+            font-size: 16px;
+            color: #1f2937;
+        }
+        
+        .save-indicator {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: #10b981;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            z-index: 1000;
+            pointer-events: none;
+        }
+        
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        
+        .add-btn {
+            padding: 8px 16px;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        
+        .arrears-indicator {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 8px 12px;
+            border-radius: 8px;
+            margin-top: 8px;
+            font-size: 12px;
+            color: #92400e;
+        }
+        
+        .advance-indicator {
+            background: #dbeafe;
+            border-left: 4px solid #3b82f6;
+            padding: 8px 12px;
+            border-radius: 8px;
+            margin-top: 8px;
+            font-size: 12px;
+            color: #1e40af;
+        }
+        
+        .info-box {
+            background: #eff6ff;
+            border-left: 4px solid #3b82f6;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-size: 14px;
+            color: #1e40af;
+        }
+        
+        .warning-box {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-size: 14px;
+            color: #92400e;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+</head>
+<body>
+    <div id="app"></div>
+    <div id="saveIndicator" class="save-indicator hidden">✓ Saved</div>
+    
+    <script>
+        const START_MONTH = '2026-09';
+        const CURRENT_MONTH = (() => {
+            const now = new Date().toISOString().slice(0, 7);
+            return now < START_MONTH ? START_MONTH : now;
+        })();
+        
+        let state = {
+            activeTab: 'dashboard',
+            selectedMonth: CURRENT_MONTH,
+            flats: [],
+            expenditures: [],
+            bankTransactions: [],
+            cashBankTransfers: [],
+            extraCharges: {}, // { 'YYYY-MM': { amount, reason } }
+            openingBalances: {
+                cash: 0,
+                bank: 0
+            },
+            modals: {
+                addFlat: false,
+                editFlat: null,
+                addPayment: false,
+                addExpenditure: false,
+                editExpenditure: null,
+                flatDetails: null,
+                collectionDetails: false,
+                expenditureDetails: false,
+                arrearsDetails: false,
+                openingBalances: false,
+                balanceSheet: false,
+                addBankTransaction: false,
+                addCashBankTransfer: false,
+                extraCharge: false
+            },
+            paymentMonthForDate: CURRENT_MONTH,
+            selectedFlatForPayment: null,
+            suggestedPaymentAmount: 0
+        };
+        
+        function showSaveIndicator() {
+            const indicator = document.getElementById('saveIndicator');
+            indicator.classList.remove('hidden');
+            setTimeout(() => indicator.classList.add('hidden'), 3000);
+        }
+        
+        function loadData() {
+            try {
+                const savedFlats = localStorage.getItem('apartmentFlats');
+                const savedExpenditures = localStorage.getItem('apartmentExpenditures');
+                const savedBalances = localStorage.getItem('openingBalances');
+                const savedBankTransactions = localStorage.getItem('bankTransactions');
+                const savedCashBankTransfers = localStorage.getItem('cashBankTransfers');
+                const savedExtraCharges = localStorage.getItem('extraCharges');
+                
+                if (savedFlats) state.flats = JSON.parse(savedFlats);
+                if (savedExpenditures) state.expenditures = JSON.parse(savedExpenditures);
+                if (savedBalances) state.openingBalances = JSON.parse(savedBalances);
+                if (savedBankTransactions) state.bankTransactions = JSON.parse(savedBankTransactions);
+                if (savedCashBankTransfers) state.cashBankTransfers = JSON.parse(savedCashBankTransfers);
+                if (savedExtraCharges) state.extraCharges = JSON.parse(savedExtraCharges);
+                
+                if (state.selectedMonth < START_MONTH) state.selectedMonth = START_MONTH;
+            } catch (error) {
+                console.error('Error loading data:', error);
+            }
+        }
+        
+        function saveData() {
+            try {
+                localStorage.setItem('apartmentFlats', JSON.stringify(state.flats));
+                localStorage.setItem('apartmentExpenditures', JSON.stringify(state.expenditures));
+                localStorage.setItem('openingBalances', JSON.stringify(state.openingBalances));
+                localStorage.setItem('bankTransactions', JSON.stringify(state.bankTransactions));
+                localStorage.setItem('cashBankTransfers', JSON.stringify(state.cashBankTransfers));
+                localStorage.setItem('extraCharges', JSON.stringify(state.extraCharges));
+                showSaveIndicator();
+            } catch (error) {
+                console.error('Error saving data:', error);
+                alert('⚠️ Unable to save data');
+            }
+        }
+        
+        function getTodayDateString() {
+            const today = new Date();
+            return today.toISOString().slice(0, 10);
+        }
+        
+        // NEW: Calculate the balance including current month's demand
+        function calculateBalance(flat, month) {
+            // Start with opening arrears (negative = owe, positive = advance)
+            let balance = flat.openingArrears || 0;
+            
+            const currentDate = new Date(month + '-01');
+            const startDate = new Date(START_MONTH + '-01');
+            let checkDate = new Date(startDate);
+            
+            // Add up all monthly fees from start to current month (inclusive)
+            // Also include any extra charge for each specific month
+            while (checkDate <= currentDate) {
+                const checkMonth = checkDate.toISOString().slice(0, 7);
+                balance -= flat.monthlyFee; // Subtract regular monthly fee
+                const extra = state.extraCharges[checkMonth];
+                if (extra && extra.amount > 0) {
+                    balance -= extra.amount; // Subtract extra charge for that specific month only
+                }
+                checkDate.setMonth(checkDate.getMonth() + 1);
+            }
+            
+            // Add all payments from start to current month (inclusive)
+            flat.payments.forEach(payment => {
+                const paymentDate = new Date(payment.month + '-01');
+                if (paymentDate >= startDate && paymentDate <= currentDate) {
+                    balance += payment.amount; // Add what was paid
+                }
+            });
+            
+            return balance; // Positive = advance, Negative = arrears
+        }
+        
+        function getExtraChargeForMonth(month) {
+            return state.extraCharges[month] || null;
+        }
+        
+        function setExtraCharge(e) {
+            e.preventDefault();
+            const form = e.target;
+            const amount = parseFloat(form.extraAmount.value) || 0;
+            const reason = form.extraReason.value.trim();
+            const month = state.selectedMonth;
+            
+            if (amount <= 0) {
+                delete state.extraCharges[month];
+            } else {
+                state.extraCharges[month] = { amount, reason };
+            }
+            saveData();
+            closeModal('extraCharge');
+            render();
+        }
+        
+        function removeExtraCharge(month) {
+            if (confirm('Remove extra charge for this month?')) {
+                delete state.extraCharges[month];
+                saveData();
+                render();
+            }
+        }
+        
+        function getPaymentStatusWithBalance(flat, month) {
+            const balance = calculateBalance(flat, month);
+            
+            // Positive balance means advance (already paid more than owed)
+            if (balance >= 0) {
+                return {
+                    status: 'Paid',
+                    balance: balance, // Amount of advance
+                    type: 'advance'
+                };
+            } else {
+                // Negative balance means arrears (owe money)
+                const currentMonthPayment = flat.payments.find(p => p.month === month);
+                const currentMonthPaid = currentMonthPayment ? currentMonthPayment.amount : 0;
+                
+                if (currentMonthPaid > 0) {
+                    return { 
+                        status: 'Partial', 
+                        balance: balance, // Negative amount owed
+                        type: 'arrears' 
+                    };
+                } else {
+                    return { 
+                        status: 'Pending', 
+                        balance: balance, // Negative amount owed
+                        type: 'arrears' 
+                    };
+                }
+            }
+        }
+        
+        function getPreviousMonth(monthStr) {
+            const date = new Date(monthStr + '-01');
+            date.setMonth(date.getMonth() - 1);
+            return date.toISOString().slice(0, 7);
+        }
+        
+        function getBalanceCarriedForward(month) {
+            if (month === START_MONTH) {
+                return { 
+                    cash: state.openingBalances.cash || 0, 
+                    bank: state.openingBalances.bank || 0, 
+                    total: (state.openingBalances.cash || 0) + (state.openingBalances.bank || 0) 
+                };
+            }
+            const prevMonth = getPreviousMonth(month);
+            const prevStats = getMonthlyStatsForMonth(prevMonth);
+            return { cash: prevStats.closingCash, bank: prevStats.closingBank, total: prevStats.closingCash + prevStats.closingBank };
+        }
+        
+        function getMonthlyStatsForMonth(month) {
+            const monthPayments = state.flats.flatMap(flat => 
+                flat.payments.filter(p => p.month === month)
+            );
+            const monthExpenditures = state.expenditures.filter(exp => 
+                exp.date.slice(0, 7) === month
+            );
+            const monthBankTransactions = state.bankTransactions.filter(txn =>
+                txn.date.slice(0, 7) === month
+            );
+            const monthCashBankTransfers = state.cashBankTransfers.filter(txn =>
+                txn.date.slice(0, 7) === month
+            );
+            
+            const cashCollections = monthPayments.filter(p => p.method === 'Cash').reduce((sum, p) => sum + p.amount, 0);
+            const bankCollections = monthPayments.reduce((sum, p) => p.method !== 'Cash' ? sum + p.amount : sum, 0);
+            const totalCollected = cashCollections + bankCollections;
+            
+            const cashExpenditure = monthExpenditures.filter(e => e.paymentMethod === 'Cash').reduce((sum, e) => sum + e.amount, 0);
+            const bankExpenditure = monthExpenditures.reduce((sum, e) => e.paymentMethod !== 'Cash' ? sum + e.amount : sum, 0);
+            const totalExpenditure = cashExpenditure + bankExpenditure;
+            
+            // Calculate bank interest and charges
+            const bankInterest = monthBankTransactions.filter(t => t.type === 'Interest').reduce((sum, t) => sum + t.amount, 0);
+            const bankCharges = monthBankTransactions.filter(t => t.type === 'Charges').reduce((sum, t) => sum + t.amount, 0);
+            
+            // Calculate cash-bank transfers
+            const cashToBank = monthCashBankTransfers.filter(t => t.type === 'Deposit').reduce((sum, t) => sum + t.amount, 0);
+            const bankToCash = monthCashBankTransfers.filter(t => t.type === 'Withdrawal').reduce((sum, t) => sum + t.amount, 0);
+            
+            const balanceCF = getBalanceCarriedForward(month);
+            const closingCash = balanceCF.cash + cashCollections - cashExpenditure - cashToBank + bankToCash;
+            const closingBank = balanceCF.bank + bankCollections - bankExpenditure + bankInterest - bankCharges + cashToBank - bankToCash;
+            
+            let paidFlats = 0, totalArrears = 0, totalAdvance = 0;
+            let flatsWithArrears = [];
+            let flatsWithAdvance = [];
+            
+            state.flats.forEach(flat => {
+                const statusInfo = getPaymentStatusWithBalance(flat, month);
+                if (statusInfo.status === 'Paid') paidFlats++;
+                if (statusInfo.balance < 0) {
+                    totalArrears += Math.abs(statusInfo.balance);
+                    flatsWithArrears.push({ flat, arrears: Math.abs(statusInfo.balance) });
+                } else if (statusInfo.balance > 0) {
+                    totalAdvance += statusInfo.balance;
+                    flatsWithAdvance.push({ flat, advance: statusInfo.balance });
+                }
+            });
+            
+            return {
+                totalCollected, cashCollections, bankCollections,
+                totalExpenditure, cashExpenditure, bankExpenditure,
+                balance: totalCollected - totalExpenditure,
+                paidFlats, totalFlats: state.flats.length,
+                pendingFlats: state.flats.length - paidFlats,
+                monthPayments, monthExpenditures,
+                totalArrears, totalAdvance,
+                flatsWithArrears, flatsWithAdvance,
+                openingCash: balanceCF.cash, openingBank: balanceCF.bank,
+                closingCash, closingBank,
+                bankInterest, bankCharges,
+                monthBankTransactions,
+                cashToBank, bankToCash,
+                monthCashBankTransfers
+            };
+        }
+        
+        function getMonthlyStats() {
+            return getMonthlyStatsForMonth(state.selectedMonth);
+        }
+        
+        function getPaymentStatus(flat) {
+            return getPaymentStatusWithBalance(flat, state.selectedMonth).status;
+        }
+        
+        function setActiveTab(tab) {
+            state.activeTab = tab;
+            render();
+        }
+        
+        function setSelectedMonth(month) {
+            if (month >= START_MONTH) {
+                state.selectedMonth = month;
+                state.paymentMonthForDate = month;
+                render();
+            } else {
+                alert('Cannot select months before September 2026');
+            }
+        }
+        
+        function openModal(modal) {
+            state.modals[modal] = true;
+            // Reset payment month when opening payment modal
+            if (modal === 'addPayment') {
+                state.paymentMonthForDate = state.selectedMonth;
+            }
+            render();
+        }
+        
+        function closeModal(modal) {
+            state.modals[modal] = false;
+            if (modal === 'addPayment') {
+                state.selectedFlatForPayment = null;
+                state.suggestedPaymentAmount = 0;
+            }
+            if (modal === 'editFlat') state.modals.editFlat = null;
+            render();
+        }
+        
+        function showFlatPayment(flat) {
+            // Check if flat has advance payment that covers this month
+            const statusInfo = getPaymentStatusWithBalance(flat, state.selectedMonth);
+            if (statusInfo.balance >= 0) {
+                // Has advance, don't open payment modal
+                return;
+            }
+            
+            // Calculate the amount due (absolute value of negative balance)
+            const amountDue = Math.abs(statusInfo.balance);
+            
+            state.selectedFlatForPayment = flat;
+            state.suggestedPaymentAmount = amountDue;
+            state.modals.addPayment = true;
+            render();
+        }
+        
+        function openEditFlat(flat) {
+            state.modals.editFlat = flat;
+            render();
+        }
+        
+        function openEditExpenditure(exp) {
+            state.modals.editExpenditure = exp;
+            render();
+        }
+        
+        function updatePaymentMonth(month) {
+            state.paymentMonthForDate = month;
+            render();
+            // After render, reset the date input to the default date for the selected month
+            setTimeout(() => {
+                const dateInput = document.querySelector('input[name="date"]');
+                if (dateInput) {
+                    const dateRange = getDateRangeForMonth(month);
+                    dateInput.value = dateRange.defaultDate;
+                }
+            }, 0);
+        }
+        
+        function updateSelectedFlat(flatId) {
+            const flat = state.flats.find(f => f.id === parseInt(flatId));
+            if (flat) {
+                const statusInfo = getPaymentStatusWithBalance(flat, state.selectedMonth);
+                const amountDue = statusInfo.balance < 0 ? Math.abs(statusInfo.balance) : 0;
+                
+                // Update the amount field
+                setTimeout(() => {
+                    const amountInput = document.querySelector('input[name="amount"]');
+                    if (amountInput && amountDue > 0) {
+                        amountInput.value = amountDue;
+                    }
+                }, 0);
+            }
+        }
+        
+        function getDateRangeForMonth(monthStr) {
+            const year = parseInt(monthStr.split('-')[0]);
+            const month = parseInt(monthStr.split('-')[1]);
+            
+            // First day of the selected month
+            const firstDay = new Date(year, month - 1, 1);
+            // Last day of the selected month
+            const lastDay = new Date(year, month, 0);
+            
+            // Get today's date
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            // Min date is the 1st of the selected month
+            const minDate = firstDay.toISOString().slice(0, 10);
+            
+            // Max date is the earlier of: last day of month OR today
+            let maxDate = lastDay.toISOString().slice(0, 10);
+            const todayStr = today.toISOString().slice(0, 10);
+            if (maxDate > todayStr) {
+                maxDate = todayStr;
+            }
+            
+            // Default date should be today if it's within the month, otherwise 1st of month
+            let defaultDate;
+            if (todayStr >= minDate && todayStr <= maxDate) {
+                defaultDate = todayStr; // Today is within this month
+            } else if (todayStr < minDate) {
+                defaultDate = minDate; // Today is before this month, use 1st
+            } else {
+                defaultDate = maxDate; // Today is after this month, use last valid date
+            }
+            
+            return { minDate, maxDate, defaultDate };
+        }
+        
+        function setOpeningBalances(e) {
+            e.preventDefault();
+            const form = e.target;
+            state.openingBalances.cash = parseFloat(form.openingCash.value) || 0;
+            state.openingBalances.bank = parseFloat(form.openingBank.value) || 0;
+            saveData();
+            closeModal('openingBalances');
+        }
+        
+        function addFlat(e) {
+            e.preventDefault();
+            const form = e.target;
+            state.flats.push({
+                id: Date.now(),
+                flatNumber: form.flatNumber.value,
+                ownerName: form.ownerName.value,
+                monthlyFee: parseFloat(form.monthlyFee.value),
+                phoneNumber: form.phoneNumber.value,
+                openingArrears: parseFloat(form.openingArrears.value) || 0,
+                payments: []
+            });
+            saveData();
+            closeModal('addFlat');
+            form.reset();
+        }
+        
+        function updateFlat(e) {
+            e.preventDefault();
+            const form = e.target;
+            const flatId = parseInt(form.flatId.value);
+            const flatIndex = state.flats.findIndex(f => f.id === flatId);
+            
+            if (flatIndex !== -1) {
+                state.flats[flatIndex] = {
+                    ...state.flats[flatIndex],
+                    flatNumber: form.flatNumber.value,
+                    ownerName: form.ownerName.value,
+                    monthlyFee: parseFloat(form.monthlyFee.value),
+                    phoneNumber: form.phoneNumber.value,
+                    openingArrears: parseFloat(form.openingArrears.value) || 0
+                };
+                saveData();
+                closeModal('editFlat');
+            }
+        }
+        
+        function deleteFlat(id) {
+            if (confirm('Delete this flat? All payment records will be lost.')) {
+                state.flats = state.flats.filter(f => f.id !== id);
+                saveData();
+                closeModal('editFlat');
+                render();
+            }
+        }
+        
+        function recordPayment(e) {
+            e.preventDefault();
+            const form = e.target;
+            const flatId = parseInt(form.flatId.value);
+            const flat = state.flats.find(f => f.id === flatId);
+            const selectedMonth = form.month.value;
+            const paymentDate = form.date.value;
+            
+            // Validation 1: Cannot record payments before START_MONTH
+            if (selectedMonth < START_MONTH) {
+                alert('Cannot record payments before September 2026');
+                return;
+            }
+            
+            // Validation 2: Payment date must be within selected month
+            const paymentMonthFromDate = paymentDate.slice(0, 7);
+            if (paymentMonthFromDate !== selectedMonth) {
+                alert('Payment date must be within the selected month (' + selectedMonth + ')');
+                return;
+            }
+            
+            // Validation 3: Payment date cannot be in the future
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const paymentDateObj = new Date(paymentDate);
+            if (paymentDateObj > today) {
+                alert('Payment date cannot be in the future');
+                return;
+            }
+            
+            // Validation 4: Cannot collect payment for future months
+            const currentYearMonth = new Date().toISOString().slice(0, 7);
+            if (selectedMonth > currentYearMonth) {
+                alert('Cannot collect payments for future months. Current month is ' + currentYearMonth);
+                return;
+            }
+            
+            if (flat) {
+                flat.payments.push({
+                    id: Date.now(),
+                    month: selectedMonth,
+                    amount: parseFloat(form.amount.value),
+                    date: paymentDate,
+                    method: form.method.value
+                });
+                saveData();
+                closeModal('addPayment');
+                form.reset();
+                render();
+            }
+        }
+        
+        function addExpenditure(e) {
+            e.preventDefault();
+            const form = e.target;
+            const expDate = form.date.value;
+            
+            if (expDate.slice(0, 7) < START_MONTH) {
+                alert('Cannot add expenditures before September 2026');
+                return;
+            }
+            
+            state.expenditures.push({
+                id: Date.now(),
+                description: form.description.value,
+                category: form.category.value,
+                amount: parseFloat(form.amount.value),
+                date: expDate,
+                vendor: form.vendor.value,
+                paymentMethod: form.paymentMethod.value
+            });
+            saveData();
+            closeModal('addExpenditure');
+            form.reset();
+            render();
+        }
+        
+        function updateExpenditure(e) {
+            e.preventDefault();
+            const form = e.target;
+            const expId = parseInt(form.expId.value);
+            const expIndex = state.expenditures.findIndex(e => e.id === expId);
+            const expDate = form.date.value;
+            
+            if (expDate.slice(0, 7) < START_MONTH) {
+                alert('Cannot set date before September 2026');
+                return;
+            }
+            
+            if (expIndex !== -1) {
+                state.expenditures[expIndex] = {
+                    ...state.expenditures[expIndex],
+                    description: form.description.value,
+                    category: form.category.value,
+                    amount: parseFloat(form.amount.value),
+                    date: expDate,
+                    vendor: form.vendor.value,
+                    paymentMethod: form.paymentMethod.value
+                };
+                saveData();
+                state.modals.editExpenditure = null;
+            }
+        }
+        
+        function deleteExpenditure(id) {
+            if (confirm('Delete this expenditure?')) {
+                state.expenditures = state.expenditures.filter(e => e.id !== id);
+                saveData();
+                render();
+            }
+        }
+        
+        function addBankTransaction(e) {
+            e.preventDefault();
+            const form = e.target;
+            const txnDate = form.date.value;
+            
+            if (txnDate.slice(0, 7) < START_MONTH) {
+                alert('Cannot add transactions before September 2026');
+                return;
+            }
+            
+            state.bankTransactions.push({
+                id: Date.now(),
+                type: form.type.value,
+                description: form.description.value,
+                amount: parseFloat(form.amount.value),
+                date: txnDate
+            });
+            saveData();
+            closeModal('addBankTransaction');
+            form.reset();
+            render();
+        }
+        
+        function deleteBankTransaction(id) {
+            if (confirm('Delete this transaction?')) {
+                state.bankTransactions = state.bankTransactions.filter(t => t.id !== id);
+                saveData();
+                render();
+            }
+        }
+        
+        function addCashBankTransfer(e) {
+            e.preventDefault();
+            const form = e.target;
+            const txnDate = form.date.value;
+            
+            if (txnDate.slice(0, 7) < START_MONTH) {
+                alert('Cannot add transfers before September 2026');
+                return;
+            }
+            
+            state.cashBankTransfers.push({
+                id: Date.now(),
+                type: form.type.value,
+                description: form.description.value,
+                amount: parseFloat(form.amount.value),
+                date: txnDate
+            });
+            saveData();
+            closeModal('addCashBankTransfer');
+            form.reset();
+            render();
+        }
+        
+        function deleteCashBankTransfer(id) {
+            if (confirm('Delete this transfer?')) {
+                state.cashBankTransfers = state.cashBankTransfers.filter(t => t.id !== id);
+                saveData();
+                render();
+            }
+        }
+        
+        function exportToPDF() {
+            if (typeof jspdf === 'undefined' && typeof window.jspdf === 'undefined') {
+                alert('PDF library not loaded. Please refresh the page and try again.');
+                return;
+            }
+            
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            // Only export the selected month
+            const month = state.selectedMonth;
+            const stats = getMonthlyStatsForMonth(month);
+            const monthName = new Date(month + '-01').toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+            
+            let currentPage = 1;
+            
+            // HEADER PAGE for selected month
+            doc.setFillColor(37, 99, 235);
+            doc.rect(0, 0, 210, 40, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(18);
+            doc.setFont(undefined, 'bold');
+            doc.text('PEACE COURT APARTMENTS', 105, 15, { align: 'center' });
+            doc.setFontSize(14);
+            doc.text('MAINTENANCE BALANCE SHEET', 105, 25, { align: 'center' });
+            doc.setFontSize(10);
+            doc.setFont(undefined, 'normal');
+            doc.text(monthName + ' | Generated: ' + new Date().toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' }), 105, 33, { align: 'center' });
+            
+            doc.setTextColor(0, 0, 0);
+            let yPos = 45;
+            
+            // Run the month detail block directly (no loop, no addPage for first page)
+            {
+                // CASH ACCOUNT
+                doc.setFillColor(5, 150, 105);
+                doc.rect(14, yPos - 5, 182, 8, 'F');
+                doc.setTextColor(255, 255, 255);
+                doc.setFontSize(11);
+                doc.setFont(undefined, 'bold');
+                doc.text('CASH ACCOUNT', 16, yPos);
+                yPos += 10;
+                
+                doc.setTextColor(0, 0, 0);
+                doc.setFontSize(9);
+                doc.setFont(undefined, 'normal');
+                
+                const cashData = [
+                    ['Opening Balance', 'Rs.' + stats.openingCash.toLocaleString('en-IN')],
+                    ['Add: Cash Collections', 'Rs.' + stats.cashCollections.toLocaleString('en-IN')],
+                    ['Add: Withdrawal from Bank', 'Rs.' + stats.bankToCash.toLocaleString('en-IN')],
+                    ['Less: Cash Expenditures', 'Rs.' + stats.cashExpenditure.toLocaleString('en-IN')],
+                    ['Less: Deposit to Bank', 'Rs.' + stats.cashToBank.toLocaleString('en-IN')]
+                ];
+                
+                doc.autoTable({
+                    startY: yPos,
+                    body: cashData,
+                    theme: 'plain',
+                    styles: { fontSize: 9, cellPadding: 2 },
+                    columnStyles: {
+                        0: { cellWidth: 130 },
+                        1: { cellWidth: 52, halign: 'right', fontStyle: 'bold' }
+                    }
+                });
+                
+                yPos = doc.lastAutoTable.finalY + 3;
+                doc.setFillColor(254, 243, 199);
+                doc.rect(14, yPos - 2, 182, 8, 'F');
+                doc.setFont(undefined, 'bold');
+                doc.setFontSize(10);
+                doc.text('CLOSING CASH BALANCE', 16, yPos + 3);
+                doc.text('Rs.' + stats.closingCash.toLocaleString('en-IN'), 190, yPos + 3, { align: 'right' });
+                
+                yPos += 15;
+                
+                // BANK ACCOUNT
+                doc.setFillColor(37, 99, 235);
+                doc.rect(14, yPos - 5, 182, 8, 'F');
+                doc.setTextColor(255, 255, 255);
+                doc.setFontSize(11);
+                doc.text('BANK ACCOUNT', 16, yPos);
+                yPos += 10;
+                
+                doc.setTextColor(0, 0, 0);
+                doc.setFontSize(9);
+                doc.setFont(undefined, 'normal');
+                
+                const bankData = [
+                    ['Opening Balance', 'Rs.' + stats.openingBank.toLocaleString('en-IN')],
+                    ['Add: Bank Collections (UPI/Transfer/Cheque)', 'Rs.' + stats.bankCollections.toLocaleString('en-IN')],
+                    ['Add: Deposit from Cash', 'Rs.' + stats.cashToBank.toLocaleString('en-IN')],
+                    ['Add: Interest Earned', 'Rs.' + stats.bankInterest.toLocaleString('en-IN')],
+                    ['Less: Bank Expenditures', 'Rs.' + stats.bankExpenditure.toLocaleString('en-IN')],
+                    ['Less: Bank Charges', 'Rs.' + stats.bankCharges.toLocaleString('en-IN')],
+                    ['Less: Withdrawal to Cash', 'Rs.' + stats.bankToCash.toLocaleString('en-IN')]
+                ];
+                
+                doc.autoTable({
+                    startY: yPos,
+                    body: bankData,
+                    theme: 'plain',
+                    styles: { fontSize: 9, cellPadding: 2 },
+                    columnStyles: {
+                        0: { cellWidth: 130 },
+                        1: { cellWidth: 52, halign: 'right', fontStyle: 'bold' }
+                    }
+                });
+                
+                yPos = doc.lastAutoTable.finalY + 3;
+                doc.setFillColor(254, 243, 199);
+                doc.rect(14, yPos - 2, 182, 8, 'F');
+                doc.setFont(undefined, 'bold');
+                doc.setFontSize(10);
+                doc.text('CLOSING BANK BALANCE', 16, yPos + 3);
+                doc.text('Rs.' + stats.closingBank.toLocaleString('en-IN'), 190, yPos + 3, { align: 'right' });
+                
+                yPos += 15;
+                
+                // TOTAL BALANCE
+                doc.setFillColor(124, 58, 237);
+                doc.rect(14, yPos - 2, 182, 10, 'F');
+                doc.setTextColor(255, 255, 255);
+                doc.setFontSize(11);
+                doc.setFont(undefined, 'bold');
+                doc.text('TOTAL BALANCE (Cash + Bank)', 16, yPos + 4);
+                doc.text('Rs.' + (stats.closingCash + stats.closingBank).toLocaleString('en-IN'), 190, yPos + 4, { align: 'right' });
+                
+                yPos += 15;
+                
+                // COLLECTIONS & EXPENDITURE SUMMARY
+                doc.setTextColor(0, 0, 0);
+                doc.setFontSize(10);
+                const ecMonth = state.extraCharges[month];
+                const ecNote = ecMonth ? ' | Extra: Rs.' + ecMonth.amount.toLocaleString('en-IN') + '/flat (' + (ecMonth.reason || '') + ')' : '';
+                doc.text('Collections: Rs.' + stats.totalCollected.toLocaleString('en-IN') + ' (' + stats.paidFlats + '/' + stats.totalFlats + ' flats)' + ecNote, 16, yPos);
+                yPos += 6;
+                doc.text('Expenditure: Rs.' + stats.totalExpenditure.toLocaleString('en-IN') + ' (' + stats.monthExpenditures.length + ' items)', 16, yPos);
+                
+                if (stats.totalArrears > 0) {
+                    yPos += 6;
+                    doc.setTextColor(245, 158, 11);
+                    doc.text('Total Arrears: Rs.' + stats.totalArrears.toLocaleString('en-IN'), 16, yPos);
+                }
+                
+                if (stats.totalAdvance > 0) {
+                    yPos += 6;
+                    doc.setTextColor(139, 92, 246);
+                    doc.text('Total Advance: Rs.' + stats.totalAdvance.toLocaleString('en-IN'), 16, yPos);
+                }
+                
+                // Flat-wise Collections
+                if (stats.monthPayments.length > 0) {
+                    doc.addPage();
+                    currentPage++;
+                    
+                    doc.setFillColor(37, 99, 235);
+                    doc.rect(0, 0, 210, 25, 'F');
+                    doc.setTextColor(255, 255, 255);
+                    doc.setFontSize(12);
+                    doc.setFont(undefined, 'bold');
+                    const ecForMonth = state.extraCharges[month];
+                    const ecHeaderNote = ecForMonth ? ` | Extra: Rs.${ecForMonth.amount.toLocaleString('en-IN')}/flat (${ecForMonth.reason || ''})` : '';
+                    doc.text(`FLAT-WISE COLLECTIONS - ${monthName}${ecHeaderNote}`, 105, 15, { align: 'center' });
+                    
+                    const collectionsData = [];
+                    stats.monthPayments.forEach(payment => {
+                        const flat = state.flats.find(f => f.payments.some(p => p.id === payment.id));
+                        if (flat) {
+                            const statusInfo = getPaymentStatusWithBalance(flat, month);
+                            collectionsData.push([
+                                flat.flatNumber,
+                                flat.ownerName,
+                                'Rs.' + payment.amount.toLocaleString('en-IN'),
+                                payment.method,
+                                new Date(payment.date).toLocaleDateString('en-IN'),
+                                statusInfo.status
+                            ]);
+                        }
+                    });
+                    
+                    doc.autoTable({
+                        startY: 35,
+                        head: [['Flat', 'Owner', 'Amount', 'Method', 'Date', 'Status']],
+                        body: collectionsData,
+                        theme: 'striped',
+                        headStyles: { fillColor: [37, 99, 235], fontSize: 9 },
+                        bodyStyles: { fontSize: 8 },
+                        margin: { left: 14, right: 14 },
+                        columnStyles: {
+                            0: { cellWidth: 19 },
+                            1: { cellWidth: 44 },
+                            2: { cellWidth: 32, halign: 'right' },
+                            3: { cellWidth: 34 },
+                            4: { cellWidth: 27 },
+                            5: { cellWidth: 22 }
+                        }
+                    });
+                }
+                
+                // Flats with Arrears
+                if (stats.flatsWithArrears.length > 0) {
+                    doc.addPage();
+                    currentPage++;
+                    
+                    doc.setFillColor(245, 158, 11);
+                    doc.rect(0, 0, 210, 25, 'F');
+                    doc.setTextColor(255, 255, 255);
+                    doc.setFontSize(12);
+                    doc.setFont(undefined, 'bold');
+                    doc.text(`FLATS WITH ARREARS - ${monthName}`, 105, 15, { align: 'center' });
+                    
+                    const arrearsData = stats.flatsWithArrears.map(x => [
+                        x.flat.flatNumber,
+                        x.flat.ownerName,
+                        'Rs.' + x.arrears.toLocaleString('en-IN')
+                    ]);
+                    
+                    doc.autoTable({
+                        startY: 35,
+                        head: [['Flat', 'Owner', 'Arrears']],
+                        body: arrearsData,
+                        foot: [['', 'Total Arrears', 'Rs.' + stats.totalArrears.toLocaleString('en-IN')]],
+                        theme: 'striped',
+                        headStyles: { fillColor: [245, 158, 11], fontSize: 9 },
+                        footStyles: { fillColor: [254, 243, 199], textColor: [146, 64, 14], fontStyle: 'bold', fontSize: 9 },
+                        bodyStyles: { fontSize: 8.5 },
+                        margin: { left: 14, right: 14 },
+                        columnStyles: {
+                            0: { cellWidth: 30 },
+                            1: { cellWidth: 90 },
+                            2: { cellWidth: 62, halign: 'right' }
+                        }
+                    });
+                }
+                
+                // Flats with Advance Payments
+                if (stats.flatsWithAdvance.length > 0) {
+                    doc.addPage();
+                    currentPage++;
+                    
+                    doc.setFillColor(139, 92, 246);
+                    doc.rect(0, 0, 210, 25, 'F');
+                    doc.setTextColor(255, 255, 255);
+                    doc.setFontSize(12);
+                    doc.setFont(undefined, 'bold');
+                    doc.text(`FLATS WITH ADVANCE PAYMENTS - ${monthName}`, 105, 15, { align: 'center' });
+                    
+                    const advanceData = stats.flatsWithAdvance.map(x => [
+                        x.flat.flatNumber,
+                        x.flat.ownerName,
+                        'Rs.' + x.advance.toLocaleString('en-IN')
+                    ]);
+                    
+                    doc.autoTable({
+                        startY: 35,
+                        head: [['Flat', 'Owner', 'Advance']],
+                        body: advanceData,
+                        foot: [['', 'Total Advance', 'Rs.' + stats.totalAdvance.toLocaleString('en-IN')]],
+                        theme: 'striped',
+                        headStyles: { fillColor: [139, 92, 246], fontSize: 9 },
+                        footStyles: { fillColor: [237, 233, 254], textColor: [91, 33, 182], fontStyle: 'bold', fontSize: 9 },
+                        bodyStyles: { fontSize: 8.5 },
+                        margin: { left: 14, right: 14 },
+                        columnStyles: {
+                            0: { cellWidth: 30 },
+                            1: { cellWidth: 90 },
+                            2: { cellWidth: 62, halign: 'right' }
+                        }
+                    });
+                }
+                
+                // Expenditure Details
+                if (stats.monthExpenditures.length > 0) {
+                    doc.addPage();
+                    currentPage++;
+                    
+                    doc.setFillColor(239, 68, 68);
+                    doc.rect(0, 0, 210, 25, 'F');
+                    doc.setTextColor(255, 255, 255);
+                    doc.setFontSize(12);
+                    doc.setFont(undefined, 'bold');
+                    doc.text(`EXPENDITURE DETAILS - ${monthName}`, 105, 15, { align: 'center' });
+                    
+                    const expenditureData = [];
+                    stats.monthExpenditures.forEach(exp => {
+                        expenditureData.push([
+                            new Date(exp.date).toLocaleDateString('en-IN'),
+                            exp.description,
+                            exp.category,
+                            'Rs.' + exp.amount.toLocaleString('en-IN'),
+                            exp.vendor || '-',
+                            exp.paymentMethod
+                        ]);
+                    });
+                    
+                    doc.autoTable({
+                        startY: 35,
+                        head: [['Date', 'Description', 'Category', 'Amount', 'Vendor', 'Method']],
+                        body: expenditureData,
+                        theme: 'striped',
+                        headStyles: { fillColor: [239, 68, 68], fontSize: 9 },
+                        bodyStyles: { fontSize: 8 },
+                        margin: { left: 14, right: 14 },
+                        columnStyles: {
+                            0: { cellWidth: 22 },
+                            1: { cellWidth: 48 },
+                            2: { cellWidth: 28 },
+                            3: { cellWidth: 30, halign: 'right' },
+                            4: { cellWidth: 28 },
+                            5: { cellWidth: 22 }
+                        }
+                    });
+                }
+            }
+            
+            // Generate filename
+            const filename = `Peace_Court_${monthName.replace(' ', '_')}_Balance_Sheet.pdf`;
+            
+            // Download PDF
+            doc.save(filename);
+            
+            alert('PDF downloaded!\n\nFile: ' + filename + '\n\nIncludes:\n- Balance sheet for ' + monthName + '\n- Flat-wise collections\n- Flats with arrears\n- Flats with advance payments\n- Detailed expenditures');
+        }
+        
+        function renderDashboard() {
+            const stats = getMonthlyStats();
+            const extraCharge = getExtraChargeForMonth(state.selectedMonth);
+            // Only show flats that need to pay (have negative balance = arrears)
+            const pendingFlats = state.flats.filter(f => {
+                const statusInfo = getPaymentStatusWithBalance(f, state.selectedMonth);
+                return statusInfo.balance < 0; // Only show if they owe money
+            });
+            
+            return `
+                <div class="stats-grid">
+                    <div class="stat-card green" onclick="openModal('collectionDetails')">
+                        <div class="stat-label">Collected</div>
+                        <div class="stat-value">₹${(stats.totalCollected/1000).toFixed(1)}k</div>
+                        <div class="stat-detail">${stats.paidFlats}/${stats.totalFlats} paid</div>
+                    </div>
+                    <div class="stat-card red" onclick="openModal('expenditureDetails')">
+                        <div class="stat-label">Spent</div>
+                        <div class="stat-value">₹${(stats.totalExpenditure/1000).toFixed(1)}k</div>
+                        <div class="stat-detail">${stats.monthExpenditures.length} items</div>
+                    </div>
+                    ${stats.totalArrears > 0 ? `
+                    <div class="stat-card orange" onclick="openModal('arrearsDetails')">
+                        <div class="stat-label">Arrears</div>
+                        <div class="stat-value">₹${stats.totalArrears.toLocaleString()}</div>
+                        <div class="stat-detail">${stats.flatsWithArrears.length} flats</div>
+                    </div>` : ''}
+                    ${stats.totalAdvance > 0 ? `
+                    <div class="stat-card purple">
+                        <div class="stat-label">Advance</div>
+                        <div class="stat-value">₹${stats.totalAdvance.toLocaleString()}</div>
+                        <div class="stat-detail">${stats.flatsWithAdvance.length} flats</div>
+                    </div>` : ''}
+                    ${extraCharge ? `
+                    <div class="stat-card full-width" style="background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%); cursor: pointer;" onclick="openModal('extraCharge')">
+                        <div class="stat-label">✨ Extra Charge This Month</div>
+                        <div class="stat-value">₹${extraCharge.amount.toLocaleString()}/flat</div>
+                        <div class="stat-detail">${extraCharge.reason || 'Special collection'} • Total: ₹${(extraCharge.amount * state.flats.length).toLocaleString()} • Tap to edit</div>
+                    </div>` : ''}
+                    <div class="stat-card ${stats.balance >= 0 ? 'blue' : 'orange'} full-width">
+                        <div class="stat-label">Balance</div>
+                        <div class="stat-value">₹${stats.balance.toLocaleString()}</div>
+                        <div class="stat-detail">Cash: ₹${stats.closingCash.toLocaleString()} • Bank: ₹${stats.closingBank.toLocaleString()}</div>
+                    </div>
+                </div>
+                
+                <div class="section">
+                    <div class="section-header">
+                        <div class="section-title">Cash & Bank</div>
+                        <div style="display: flex; gap: 8px;">
+                            ${state.selectedMonth === START_MONTH ? `
+                                <button class="add-btn" onclick="openModal('openingBalances')">⚙️ Opening</button>
+                            ` : ''}
+                            <button class="add-btn" style="background: #8b5cf6;" onclick="openModal('addBankTransaction')">🏦 Bank Txn</button>
+                            <button class="add-btn" style="background: #f59e0b;" onclick="openModal('addCashBankTransfer')">💱 Transfer</button>
+                        </div>
+                    </div>
+                    <div class="balance-card">
+                        <div class="balance-row" style="border-bottom: 1px solid #e5e7eb;">
+                            <span class="balance-label">Opening Cash</span>
+                            <span class="balance-value">₹${stats.openingCash.toLocaleString()}</span>
+                        </div>
+                        <div class="balance-row" style="border-bottom: 1px solid #e5e7eb;">
+                            <span class="balance-label">+ Collections</span>
+                            <span class="balance-value" style="color: #10b981;">₹${stats.cashCollections.toLocaleString()}</span>
+                        </div>
+                        <div class="balance-row" style="border-bottom: 1px solid #e5e7eb;">
+                            <span class="balance-label">- Expenses</span>
+                            <span class="balance-value" style="color: #ef4444;">₹${stats.cashExpenditure.toLocaleString()}</span>
+                        </div>
+                        ${stats.bankToCash > 0 ? `
+                        <div class="balance-row" style="border-bottom: 1px solid #e5e7eb;">
+                            <span class="balance-label">+ From Bank</span>
+                            <span class="balance-value" style="color: #10b981;">₹${stats.bankToCash.toLocaleString()}</span>
+                        </div>` : ''}
+                        ${stats.cashToBank > 0 ? `
+                        <div class="balance-row" style="border-bottom: 1px solid #e5e7eb;">
+                            <span class="balance-label">- To Bank</span>
+                            <span class="balance-value" style="color: #ef4444;">₹${stats.cashToBank.toLocaleString()}</span>
+                        </div>` : ''}
+                        <div class="balance-row" style="border-bottom: 2px solid #1f2937;">
+                            <span class="balance-label" style="font-weight: 600;">Closing Cash</span>
+                            <span class="balance-value" style="font-size: 18px; color: #10b981;">₹${stats.closingCash.toLocaleString()}</span>
+                        </div>
+                        <div class="balance-row" style="border-bottom: 1px solid #e5e7eb; margin-top: 12px;">
+                            <span class="balance-label">Opening Bank</span>
+                            <span class="balance-value">₹${stats.openingBank.toLocaleString()}</span>
+                        </div>
+                        <div class="balance-row" style="border-bottom: 1px solid #e5e7eb;">
+                            <span class="balance-label">+ Collections</span>
+                            <span class="balance-value" style="color: #10b981;">₹${stats.bankCollections.toLocaleString()}</span>
+                        </div>
+                        <div class="balance-row" style="border-bottom: 1px solid #e5e7eb;">
+                            <span class="balance-label">- Expenses</span>
+                            <span class="balance-value" style="color: #ef4444;">₹${stats.bankExpenditure.toLocaleString()}</span>
+                        </div>
+                        ${stats.bankInterest > 0 ? `
+                        <div class="balance-row" style="border-bottom: 1px solid #e5e7eb;">
+                            <span class="balance-label">+ Interest</span>
+                            <span class="balance-value" style="color: #10b981;">₹${stats.bankInterest.toLocaleString()}</span>
+                        </div>` : ''}
+                        ${stats.bankCharges > 0 ? `
+                        <div class="balance-row" style="border-bottom: 1px solid #e5e7eb;">
+                            <span class="balance-label">- Charges</span>
+                            <span class="balance-value" style="color: #ef4444;">₹${stats.bankCharges.toLocaleString()}</span>
+                        </div>` : ''}
+                        ${stats.cashToBank > 0 ? `
+                        <div class="balance-row" style="border-bottom: 1px solid #e5e7eb;">
+                            <span class="balance-label">+ From Cash</span>
+                            <span class="balance-value" style="color: #10b981;">₹${stats.cashToBank.toLocaleString()}</span>
+                        </div>` : ''}
+                        ${stats.bankToCash > 0 ? `
+                        <div class="balance-row" style="border-bottom: 1px solid #e5e7eb;">
+                            <span class="balance-label">- To Cash</span>
+                            <span class="balance-value" style="color: #ef4444;">₹${stats.bankToCash.toLocaleString()}</span>
+                        </div>` : ''}
+                        <div class="balance-row">
+                            <span class="balance-label" style="font-weight: 600;">Closing Bank</span>
+                            <span class="balance-value" style="font-size: 18px; color: #3b82f6;">₹${stats.closingBank.toLocaleString()}</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="section">
+                    <div class="section-title">Quick Actions</div>
+                    <div class="quick-actions">
+                        <button class="action-btn green" onclick="openModal('addPayment')">💰 Payment</button>
+                        <button class="action-btn red" onclick="openModal('addExpenditure')">💸 Expense</button>
+                    </div>
+                    <button class="action-btn" style="margin-top: 12px; width: 100%; background: linear-gradient(135deg, #0d9488, #0f766e);" onclick="openModal('extraCharge')">✨ ${extraCharge ? 'Edit' : 'Set'} Extra Charge</button>
+                    <button class="action-btn blue" style="margin-top: 12px; width: 100%;" onclick="openModal('balanceSheet')">📋 View Balance Sheet</button>
+                    <button class="action-btn" style="margin-top: 12px; width: 100%; background: #dc2626;" onclick="exportToPDF()">📄 Export to PDF</button>
+                </div>
+                
+                ${pendingFlats.length > 0 ? `
+                <div class="section">
+                    <div class="section-title">Pending Payments (${pendingFlats.length})</div>
+                    <div class="item-list">
+                        ${pendingFlats.map(flat => {
+                            const statusInfo = getPaymentStatusWithBalance(flat, state.selectedMonth);
+                            const amountOwed = Math.abs(statusInfo.balance);
+                            return `
+                            <div class="item" onclick='showFlatPayment(${JSON.stringify(flat).replace(/'/g, "&apos;")})'>
+                                <div class="item-header">
+                                    <div>
+                                        <div class="item-title">${flat.flatNumber}</div>
+                                        <div class="item-subtitle">${flat.ownerName}</div>
+                                    </div>
+                                    <div class="item-amount" style="color: #ef4444;">₹${amountOwed.toLocaleString()}</div>
+                                </div>
+                                <div class="arrears-indicator">Amount Due: ₹${amountOwed.toLocaleString()}</div>
+                            </div>
+                        `}).join('')}
+                    </div>
+                </div>` : ''}
+            `;
+        }
+        
+        function renderFlats() {
+            return `
+                <div class="section-header">
+                    <div class="section-title">Flats (${state.flats.length})</div>
+                    <button class="add-btn" onclick="openModal('addFlat')">+ Add</button>
+                </div>
+                ${state.flats.length === 0 ? `
+                    <div class="section">
+                        <div class="empty-state">
+                            <div class="empty-icon">🏢</div>
+                            <div class="empty-text">No flats added</div>
+                            <button class="action-btn blue" onclick="openModal('addFlat')">Add First Flat</button>
+                        </div>
+                    </div>
+                ` : state.flats.map(flat => {
+                    const status = getPaymentStatus(flat);
+                    const statusInfo = getPaymentStatusWithBalance(flat, state.selectedMonth);
+                    const statusClass = status === 'Paid' ? 'paid' : status === 'Partial' ? 'partial' : 'pending';
+                    return `
+                        <div class="section">
+                            <div class="item-header">
+                                <div onclick='showFlatPayment(${JSON.stringify(flat).replace(/'/g, "&apos;")})' style="flex: 1; cursor: pointer;">
+                                    <div class="item-title" style="font-size: 18px;">${flat.flatNumber}</div>
+                                    <div class="item-subtitle">${flat.ownerName}</div>
+                                </div>
+                                <div style="display: flex; flex-direction: column; align-items: flex-end;">
+                                    <span class="status-badge ${statusClass}">${status}</span>
+                                    <button class="edit-btn" onclick='event.stopPropagation(); openEditFlat(${JSON.stringify(flat).replace(/'/g, "&apos;")})' style="margin-top: 8px;">Edit</button>
+                                </div>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-top: 12px; padding-top: 12px; border-top: 1px solid #e5e7eb;">
+                                <div style="font-size: 14px; color: #6b7280;">Monthly Fee</div>
+                                <div style="font-size: 18px; font-weight: bold;">₹${flat.monthlyFee}</div>
+                            </div>
+                            ${getExtraChargeForMonth(state.selectedMonth) ? `
+                            <div style="display: flex; justify-content: space-between; margin-top: 6px;">
+                                <div style="font-size: 13px; color: #0d9488;">✨ Extra (${getExtraChargeForMonth(state.selectedMonth).reason})</div>
+                                <div style="font-size: 13px; font-weight: bold; color: #0d9488;">+₹${getExtraChargeForMonth(state.selectedMonth).amount.toLocaleString()}</div>
+                            </div>` : ''}
+                            ${statusInfo.balance < 0 ? `
+                            <div class="arrears-indicator">Amount Due: ₹${Math.abs(statusInfo.balance).toLocaleString()}</div>
+                            ` : statusInfo.balance > 0 ? `
+                            <div class="advance-indicator">Advance Balance: ₹${statusInfo.balance.toLocaleString()}</div>
+                            ` : ''}
+                        </div>
+                    `;
+                }).join('')}
+            `;
+        }
+        
+        function renderExpenses() {
+            const stats = getMonthlyStats();
+            const categoryTotals = stats.monthExpenditures.reduce((acc, exp) => {
+                acc[exp.category] = (acc[exp.category] || 0) + exp.amount;
+                return acc;
+            }, {});
+            
+            return `
+                <div class="section-header">
+                    <div class="section-title">Expenses</div>
+                    <button class="add-btn" onclick="openModal('addExpenditure')">+ Add</button>
+                </div>
+                <div class="section">
+                    <div style="font-weight: bold; margin-bottom: 12px;">This Month</div>
+                    ${Object.keys(categoryTotals).length > 0 ? `
+                        ${Object.entries(categoryTotals).map(([category, amount]) => `
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                <span style="font-size: 14px; color: #6b7280;">${category}</span>
+                                <span style="font-weight: 600;">₹${amount.toLocaleString()}</span>
+                            </div>
+                        `).join('')}
+                        <div style="display: flex; justify-content: space-between; padding-top: 8px; border-top: 1px solid #e5e7eb; font-weight: bold;">
+                            <span>Total</span>
+                            <span style="color: #ef4444;">₹${stats.totalExpenditure.toLocaleString()}</span>
+                        </div>
+                    ` : '<div style="color: #9ca3af;">No expenses</div>'}
+                </div>
+                ${state.expenditures.sort((a, b) => new Date(b.date) - new Date(a.date)).map(exp => `
+                    <div class="section">
+                        <div class="item-header">
+                            <div style="flex: 1;">
+                                <div class="item-title">${exp.description}</div>
+                                <div class="item-subtitle">${new Date(exp.date).toLocaleDateString()}</div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="font-weight: bold; color: #ef4444;">₹${exp.amount}</div>
+                                <div style="margin-top: 4px;">
+                                    <button class="edit-btn" onclick='event.stopPropagation(); openEditExpenditure(${JSON.stringify(exp).replace(/'/g, "&apos;")})'>Edit</button>
+                                    <button class="delete-btn" onclick="event.stopPropagation(); deleteExpenditure(${exp.id})">Delete</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="item-footer">
+                            <span class="category-tag">${exp.category}</span>
+                            ${exp.vendor ? `<span class="vendor-tag">${exp.vendor}</span>` : ''}
+                            <span class="vendor-tag">${exp.paymentMethod}</span>
+                        </div>
+                    </div>
+                `).join('')}
+            `;
+        }
+        
+        function render() {
+            const app = document.getElementById('app');
+            let content = '';
+            if (state.activeTab === 'dashboard') content = renderDashboard();
+            else if (state.activeTab === 'flats') content = renderFlats();
+            else if (state.activeTab === 'expenses') content = renderExpenses();
+            
+            const monthDisplay = new Date(state.selectedMonth + '-01').toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+            
+            app.innerHTML = `
+                <div class="header">
+                    <h1>Peace Court Apartments</h1>
+                    <p>Maintenance Management System</p>
+                </div>
+                <div class="month-selector">
+                    <label>Select Month</label>
+                    <input type="month" value="${state.selectedMonth}" min="${START_MONTH}" onchange="setSelectedMonth(this.value)">
+                    <div style="font-size: 12px; color: #6b7280; margin-top: 4px;">${monthDisplay}</div>
+                </div>
+                <div class="content">${content}</div>
+                <div class="bottom-nav">
+                    <button class="nav-btn ${state.activeTab === 'dashboard' ? 'active' : ''}" onclick="setActiveTab('dashboard')">
+                        <div class="nav-icon">📊</div>
+                        <div class="nav-label">Dashboard</div>
+                    </button>
+                    <button class="nav-btn ${state.activeTab === 'flats' ? 'active' : ''}" onclick="setActiveTab('flats')">
+                        <div class="nav-icon">🏢</div>
+                        <div class="nav-label">Flats</div>
+                    </button>
+                    <button class="nav-btn ${state.activeTab === 'expenses' ? 'active' : ''}" onclick="setActiveTab('expenses')">
+                        <div class="nav-icon">💸</div>
+                        <div class="nav-label">Expenses</div>
+                    </button>
+                </div>
+                ${renderModals()}
+            `;
+        }
+        
+        function renderModals() {
+            const stats = getMonthlyStats();
+            const dateRange = getDateRangeForMonth(state.paymentMonthForDate);
+            let html = '';
+            
+            // Balance Sheet Modal
+            if (state.modals.balanceSheet) {
+                // Generate list of all months from START_MONTH to selectedMonth
+                const months = [];
+                let currentMonth = new Date(START_MONTH + '-01');
+                const endMonth = new Date(state.selectedMonth + '-01');
+                
+                while (currentMonth <= endMonth) {
+                    months.push(currentMonth.toISOString().slice(0, 7));
+                    currentMonth.setMonth(currentMonth.getMonth() + 1);
+                }
+                
+                html += `<div class="modal-overlay" onclick="closeModal('balanceSheet')"></div>
+                <div class="modal"><div class="modal-content"><div class="modal-header">
+                <div class="modal-title">Peace Court Apartments - Balance Sheet</div>
+                <button class="close-btn" onclick="closeModal('balanceSheet')">×</button>
+                </div><div class="modal-body">
+                <div style="overflow-x: auto;">
+                    ${months.map(month => {
+                        const monthStats = getMonthlyStatsForMonth(month);
+                        const monthName = new Date(month + '-01').toLocaleDateString('en-US', {month: 'long', year: 'numeric'});
+                        return `
+                            <div style="margin-bottom: 24px; border: 2px solid #e5e7eb; border-radius: 12px; padding: 16px; background: white;">
+                                <div style="font-size: 18px; font-weight: bold; color: #1f2937; margin-bottom: 16px; border-bottom: 2px solid #2563eb; padding-bottom: 8px;">
+                                    ${monthName}
+                                </div>
+                                
+                                <div style="background: #f9fafb; border-radius: 8px; padding: 12px; margin-bottom: 12px;">
+                                    <div style="font-weight: 600; color: #1f2937; margin-bottom: 8px; font-size: 14px;">CASH</div>
+                                    <div style="display: flex; justify-content: space-between; padding: 4px 0; font-size: 13px;">
+                                        <span style="color: #6b7280;">Opening Balance</span>
+                                        <span style="font-weight: 600;">₹${monthStats.openingCash.toLocaleString()}</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; padding: 4px 0; font-size: 13px;">
+                                        <span style="color: #10b981;">+ Collections</span>
+                                        <span style="color: #10b981; font-weight: 600;">₹${monthStats.cashCollections.toLocaleString()}</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; padding: 4px 0; font-size: 13px;">
+                                        <span style="color: #ef4444;">- Expenditures</span>
+                                        <span style="color: #ef4444; font-weight: 600;">₹${monthStats.cashExpenditure.toLocaleString()}</span>
+                                    </div>
+                                    ${monthStats.bankToCash > 0 ? `
+                                    <div style="display: flex; justify-content: space-between; padding: 4px 0; font-size: 13px;">
+                                        <span style="color: #10b981;">+ From Bank</span>
+                                        <span style="color: #10b981; font-weight: 600;">₹${monthStats.bankToCash.toLocaleString()}</span>
+                                    </div>` : ''}
+                                    ${monthStats.cashToBank > 0 ? `
+                                    <div style="display: flex; justify-content: space-between; padding: 4px 0; font-size: 13px;">
+                                        <span style="color: #ef4444;">- To Bank</span>
+                                        <span style="color: #ef4444; font-weight: 600;">₹${monthStats.cashToBank.toLocaleString()}</span>
+                                    </div>` : ''}
+                                    <div style="display: flex; justify-content: space-between; padding: 8px 0 4px 0; border-top: 2px solid #1f2937; margin-top: 4px; font-size: 14px;">
+                                        <span style="font-weight: 700; color: #1f2937;">Closing Balance</span>
+                                        <span style="font-weight: 700; color: #10b981; font-size: 16px;">₹${monthStats.closingCash.toLocaleString()}</span>
+                                    </div>
+                                </div>
+                                
+                                <div style="background: #eff6ff; border-radius: 8px; padding: 12px;">
+                                    <div style="font-weight: 600; color: #1f2937; margin-bottom: 8px; font-size: 14px;">BANK</div>
+                                    <div style="display: flex; justify-content: space-between; padding: 4px 0; font-size: 13px;">
+                                        <span style="color: #6b7280;">Opening Balance</span>
+                                        <span style="font-weight: 600;">₹${monthStats.openingBank.toLocaleString()}</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; padding: 4px 0; font-size: 13px;">
+                                        <span style="color: #3b82f6;">+ Collections</span>
+                                        <span style="color: #3b82f6; font-weight: 600;">₹${monthStats.bankCollections.toLocaleString()}</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; padding: 4px 0; font-size: 13px;">
+                                        <span style="color: #ef4444;">- Expenditures</span>
+                                        <span style="color: #ef4444; font-weight: 600;">₹${monthStats.bankExpenditure.toLocaleString()}</span>
+                                    </div>
+                                    ${monthStats.bankInterest > 0 ? `
+                                    <div style="display: flex; justify-content: space-between; padding: 4px 0; font-size: 13px;">
+                                        <span style="color: #10b981;">+ Interest</span>
+                                        <span style="color: #10b981; font-weight: 600;">₹${monthStats.bankInterest.toLocaleString()}</span>
+                                    </div>` : ''}
+                                    ${monthStats.bankCharges > 0 ? `
+                                    <div style="display: flex; justify-content: space-between; padding: 4px 0; font-size: 13px;">
+                                        <span style="color: #ef4444;">- Charges</span>
+                                        <span style="color: #ef4444; font-weight: 600;">₹${monthStats.bankCharges.toLocaleString()}</span>
+                                    </div>` : ''}
+                                    ${monthStats.cashToBank > 0 ? `
+                                    <div style="display: flex; justify-content: space-between; padding: 4px 0; font-size: 13px;">
+                                        <span style="color: #10b981;">+ From Cash</span>
+                                        <span style="color: #10b981; font-weight: 600;">₹${monthStats.cashToBank.toLocaleString()}</span>
+                                    </div>` : ''}
+                                    ${monthStats.bankToCash > 0 ? `
+                                    <div style="display: flex; justify-content: space-between; padding: 4px 0; font-size: 13px;">
+                                        <span style="color: #ef4444;">- To Cash</span>
+                                        <span style="color: #ef4444; font-weight: 600;">₹${monthStats.bankToCash.toLocaleString()}</span>
+                                    </div>` : ''}
+                                    <div style="display: flex; justify-content: space-between; padding: 8px 0 4px 0; border-top: 2px solid #1f2937; margin-top: 4px; font-size: 14px;">
+                                        <span style="font-weight: 700; color: #1f2937;">Closing Balance</span>
+                                        <span style="font-weight: 700; color: #3b82f6; font-size: 16px;">₹${monthStats.closingBank.toLocaleString()}</span>
+                                    </div>
+                                </div>
+                                
+                                <div style="background: #fef3c7; border-radius: 8px; padding: 12px; margin-top: 12px; display: flex; justify-content: space-between; align-items: center;">
+                                    <span style="font-weight: 700; color: #92400e; font-size: 14px;">TOTAL BALANCE</span>
+                                    <span style="font-weight: 700; color: #92400e; font-size: 18px;">₹${(monthStats.closingCash + monthStats.closingBank).toLocaleString()}</span>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+                </div></div></div>`;
+            }
+            
+            // Opening Balances Modal
+            if (state.modals.openingBalances) {
+                html += `<div class="modal-overlay" onclick="closeModal('openingBalances')"></div>
+                <div class="modal"><div class="modal-content"><div class="modal-header">
+                <div class="modal-title">Opening Balances (Sep 2026)</div>
+                <button class="close-btn" onclick="closeModal('openingBalances')">×</button>
+                </div><div class="modal-body">
+                <div class="info-box">💡 Set the cash and bank balances as of September 1, 2026</div>
+                <form onsubmit="setOpeningBalances(event)">
+                    <div class="form-group"><label class="form-label">Opening Cash Balance (₹)</label>
+                    <input type="number" name="openingCash" class="form-input" value="${state.openingBalances.cash}" step="0.01" required></div>
+                    <div class="form-group"><label class="form-label">Opening Bank Balance (₹)</label>
+                    <input type="number" name="openingBank" class="form-input" value="${state.openingBalances.bank}" step="0.01" required></div>
+                    <button type="submit" class="submit-btn blue">Save Balances</button>
+                </form></div></div></div>`;
+            }
+            
+            // Collection Details Modal
+            if (state.modals.collectionDetails) {
+                html += `<div class="modal-overlay" onclick="closeModal('collectionDetails')"></div>
+                <div class="modal"><div class="modal-content"><div class="modal-header">
+                <div class="modal-title">Collection Details</div>
+                <button class="close-btn" onclick="closeModal('collectionDetails')">×</button>
+                </div><div class="modal-body">
+                <div class="balance-card">
+                    <div class="balance-row"><span class="balance-label">Total Collected</span><span class="balance-value">₹${stats.totalCollected.toLocaleString()}</span></div>
+                    <div class="balance-row"><span class="balance-label">Cash</span><span class="balance-value" style="color: #10b981;">₹${stats.cashCollections.toLocaleString()}</span></div>
+                    <div class="balance-row"><span class="balance-label">Bank</span><span class="balance-value" style="color: #3b82f6;">₹${stats.bankCollections.toLocaleString()}</span></div>
+                </div>
+                <div style="margin-top: 20px;">
+                    <div style="font-weight: bold; margin-bottom: 12px;">Flat-wise Collections</div>
+                    ${stats.monthPayments.length > 0 ? `
+                        <div class="item-list">
+                            ${stats.monthPayments.map(payment => {
+                                const flat = state.flats.find(f => f.payments.some(p => p.id === payment.id));
+                                return `
+                                    <div class="item">
+                                        <div class="item-header">
+                                            <div>
+                                                <div class="item-title">${flat ? flat.flatNumber + ' - ' + flat.ownerName : 'Unknown'}</div>
+                                                <div class="item-subtitle">${new Date(payment.date).toLocaleDateString()} • ${payment.method}</div>
+                                            </div>
+                                            <div class="item-amount" style="color: #10b981;">₹${payment.amount.toLocaleString()}</div>
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    ` : '<div style="color: #9ca3af; text-align: center; padding: 20px;">No payments received</div>'}
+                </div>
+                </div></div></div>`;
+            }
+            
+            // Expenditure Details Modal
+            if (state.modals.expenditureDetails) {
+                html += `<div class="modal-overlay" onclick="closeModal('expenditureDetails')"></div>
+                <div class="modal"><div class="modal-content"><div class="modal-header">
+                <div class="modal-title">Expenditure Details</div>
+                <button class="close-btn" onclick="closeModal('expenditureDetails')">×</button>
+                </div><div class="modal-body">
+                <div class="balance-card">
+                    <div class="balance-row"><span class="balance-label">Total Spent</span><span class="balance-value">₹${stats.totalExpenditure.toLocaleString()}</span></div>
+                    <div class="balance-row"><span class="balance-label">Cash</span><span class="balance-value" style="color: #ef4444;">₹${stats.cashExpenditure.toLocaleString()}</span></div>
+                    <div class="balance-row"><span class="balance-label">Bank</span><span class="balance-value" style="color: #ef4444;">₹${stats.bankExpenditure.toLocaleString()}</span></div>
+                </div>
+                <div style="margin-top: 20px;">
+                    <div style="font-weight: bold; margin-bottom: 12px;">All Expenses</div>
+                    ${stats.monthExpenditures.length > 0 ? `
+                        <div class="item-list">
+                            ${stats.monthExpenditures.map(exp => `
+                                <div class="item">
+                                    <div class="item-header">
+                                        <div>
+                                            <div class="item-title">${exp.description}</div>
+                                            <div class="item-subtitle">${exp.category} • ${new Date(exp.date).toLocaleDateString()} • ${exp.paymentMethod}</div>
+                                        </div>
+                                        <div class="item-amount" style="color: #ef4444;">₹${exp.amount.toLocaleString()}</div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : '<div style="color: #9ca3af; text-align: center; padding: 20px;">No expenses</div>'}
+                </div>
+                </div></div></div>`;
+            }
+            
+            // Arrears Details Modal
+            if (state.modals.arrearsDetails) {
+                html += `<div class="modal-overlay" onclick="closeModal('arrearsDetails')"></div>
+                <div class="modal"><div class="modal-content"><div class="modal-header">
+                <div class="modal-title">Arrears Details</div>
+                <button class="close-btn" onclick="closeModal('arrearsDetails')">×</button>
+                </div><div class="modal-body">
+                <div style="font-weight: bold; margin-bottom: 12px;">Flats with Arrears</div>
+                ${stats.flatsWithArrears.length > 0 ? `
+                    <div class="item-list">
+                        ${stats.flatsWithArrears.map(({flat, arrears}) => `
+                            <div class="item">
+                                <div class="item-header">
+                                    <div>
+                                        <div class="item-title">${flat.flatNumber} - ${flat.ownerName}</div>
+                                        <div class="item-subtitle">Monthly Fee: ₹${flat.monthlyFee.toLocaleString()}</div>
+                                    </div>
+                                    <div class="item-amount" style="color: #f59e0b;">₹${arrears.toLocaleString()}</div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                ` : '<div style="color: #9ca3af; text-align: center; padding: 20px;">No arrears</div>'}
+                <div class="balance-card" style="margin-top: 20px;">
+                    <div class="balance-row">
+                        <span class="balance-label" style="font-weight: bold;">Total Arrears</span>
+                        <span class="balance-value" style="color: #f59e0b; font-size: 20px;">₹${stats.totalArrears.toLocaleString()}</span>
+                    </div>
+                </div>
+                </div></div></div>`;
+            }
+            
+            // Add Flat Modal
+            if (state.modals.addFlat) {
+                html += `<div class="modal-overlay" onclick="closeModal('addFlat')"></div>
+                <div class="modal"><div class="modal-content"><div class="modal-header">
+                <div class="modal-title">Add Flat</div>
+                <button class="close-btn" onclick="closeModal('addFlat')">×</button>
+                </div><div class="modal-body">
+                <div class="info-box">💡 Opening balance: negative = arrears, positive = advance</div>
+                <form onsubmit="addFlat(event)">
+                    <div class="form-group"><label class="form-label">Flat Number *</label>
+                    <input type="text" name="flatNumber" class="form-input" placeholder="A-101" required></div>
+                    <div class="form-group"><label class="form-label">Owner Name *</label>
+                    <input type="text" name="ownerName" class="form-input" required></div>
+                    <div class="form-group"><label class="form-label">Monthly Fee (₹) *</label>
+                    <input type="number" name="monthlyFee" class="form-input" step="0.01" required></div>
+                    <div class="form-group"><label class="form-label">Phone</label>
+                    <input type="tel" name="phoneNumber" class="form-input"></div>
+                    <div class="form-group"><label class="form-label">Opening Balance (Sep 2026)</label>
+                    <input type="number" name="openingArrears" class="form-input" placeholder="-5000 or +5000" step="0.01"></div>
+                    <button type="submit" class="submit-btn blue">Add Flat</button>
+                </form></div></div></div>`;
+            }
+            
+            // Edit Flat Modal
+            if (state.modals.editFlat) {
+                const flat = state.modals.editFlat;
+                html += `<div class="modal-overlay" onclick="closeModal('editFlat')"></div>
+                <div class="modal"><div class="modal-content"><div class="modal-header">
+                <div class="modal-title">Edit Flat</div>
+                <button class="close-btn" onclick="closeModal('editFlat')">×</button>
+                </div><div class="modal-body">
+                <form onsubmit="updateFlat(event)">
+                    <input type="hidden" name="flatId" value="${flat.id}">
+                    <div class="form-group"><label class="form-label">Flat Number *</label>
+                    <input type="text" name="flatNumber" class="form-input" value="${flat.flatNumber}" required></div>
+                    <div class="form-group"><label class="form-label">Owner Name *</label>
+                    <input type="text" name="ownerName" class="form-input" value="${flat.ownerName}" required></div>
+                    <div class="form-group"><label class="form-label">Monthly Fee (₹) *</label>
+                    <input type="number" name="monthlyFee" class="form-input" value="${flat.monthlyFee}" step="0.01" required></div>
+                    <div class="form-group"><label class="form-label">Phone</label>
+                    <input type="tel" name="phoneNumber" class="form-input" value="${flat.phoneNumber || ''}"></div>
+                    <div class="form-group"><label class="form-label">Opening Balance (Sep 2026)</label>
+                    <input type="number" name="openingArrears" class="form-input" value="${flat.openingArrears || 0}" step="0.01"></div>
+                    <button type="submit" class="submit-btn blue">Update Flat</button>
+                    <button type="button" class="submit-btn red" style="margin-top: 8px;" onclick="deleteFlat(${flat.id})">Delete Flat</button>
+                </form></div></div></div>`;
+            }
+            
+            // Add Payment Modal
+            if (state.modals.addPayment) {
+                const currentYearMonth = new Date().toISOString().slice(0, 7);
+                const paymentDateRange = getDateRangeForMonth(state.paymentMonthForDate);
+                const suggestedAmount = state.suggestedPaymentAmount > 0 ? state.suggestedPaymentAmount : '';
+                html += `<div class="modal-overlay" onclick="closeModal('addPayment')"></div>
+                <div class="modal"><div class="modal-content"><div class="modal-header">
+                <div class="modal-title">Record Payment</div>
+                <button class="close-btn" onclick="closeModal('addPayment')">×</button>
+                </div><div class="modal-body">
+                ${getExtraChargeForMonth(state.paymentMonthForDate) ? `<div class="info-box" style="background:#f0fdf4;border-color:#0d9488;color:#0f766e;">✨ Extra charge of ₹${getExtraChargeForMonth(state.paymentMonthForDate).amount.toLocaleString()} is included for ${state.paymentMonthForDate} (${getExtraChargeForMonth(state.paymentMonthForDate).reason})</div>` : ''}
+                <div class="warning-box">⚠️ Date must start from 1st of selected month and cannot be in future. Cannot collect for future months.</div>
+                <form onsubmit="recordPayment(event)">
+                    <div class="form-group"><label class="form-label">Flat *</label>
+                    <select name="flatId" class="form-select" onchange="updateSelectedFlat(this.value)" required>
+                        ${state.selectedFlatForPayment ? `<option value="${state.selectedFlatForPayment.id}" selected>${state.selectedFlatForPayment.flatNumber} - ${state.selectedFlatForPayment.ownerName}</option>` : '<option value="">Choose</option>'}
+                        ${state.flats.filter(f => !state.selectedFlatForPayment || f.id !== state.selectedFlatForPayment.id).map(f => `<option value="${f.id}">${f.flatNumber} - ${f.ownerName}</option>`).join('')}
+                    </select></div>
+                    <div class="form-group"><label class="form-label">Month * (Up to ${currentYearMonth})</label>
+                    <input type="month" name="month" class="form-input" value="${state.paymentMonthForDate}" min="${START_MONTH}" max="${currentYearMonth}" onchange="updatePaymentMonth(this.value)" required></div>
+                    <div class="form-group"><label class="form-label">Date * (${paymentDateRange.minDate} to ${paymentDateRange.maxDate})</label>
+                    <input type="date" name="date" class="form-input" min="${paymentDateRange.minDate}" max="${paymentDateRange.maxDate}" value="${paymentDateRange.defaultDate}" required></div>
+                    <div class="form-group"><label class="form-label">Amount (₹) * ${suggestedAmount ? '<span style="color: #10b981; font-size: 12px; font-weight: normal;">(Due: ₹' + suggestedAmount.toLocaleString() + ' - editable)</span>' : ''}</label>
+                    <input type="number" name="amount" class="form-input" step="0.01" value="${suggestedAmount}" placeholder="Enter amount received" required></div>
+                    <div class="form-group"><label class="form-label">Method *</label>
+                    <select name="method" class="form-select">
+                        <option>Cash</option><option>UPI</option><option>Bank Transfer</option><option>Cheque</option>
+                    </select></div>
+                    <button type="submit" class="submit-btn green">Record Payment</button>
+                </form></div></div></div>`;
+            }
+            
+            // Add Expenditure Modal
+            if (state.modals.addExpenditure) {
+                html += `<div class="modal-overlay" onclick="closeModal('addExpenditure')"></div>
+                <div class="modal"><div class="modal-content"><div class="modal-header">
+                <div class="modal-title">Add Expense</div>
+                <button class="close-btn" onclick="closeModal('addExpenditure')">×</button>
+                </div><div class="modal-body">
+                <form onsubmit="addExpenditure(event)">
+                    <div class="form-group"><label class="form-label">Description *</label>
+                    <input type="text" name="description" class="form-input" required></div>
+                    <div class="form-group"><label class="form-label">Category *</label>
+                    <select name="category" class="form-select">
+                        <option>Cleaning</option><option>Security</option><option>Repairs</option><option>Electricity</option><option>Water</option><option>Gardening</option><option>Lift Maintenance</option><option>Pest Control</option><option>Others</option>
+                    </select></div>
+                    <div class="form-group"><label class="form-label">Amount (₹) *</label>
+                    <input type="number" name="amount" class="form-input" step="0.01" required></div>
+                    <div class="form-group"><label class="form-label">Date *</label>
+                    <input type="date" name="date" class="form-input" value="${getTodayDateString()}" min="2026-09-01" required></div>
+                    <div class="form-group"><label class="form-label">Vendor</label>
+                    <input type="text" name="vendor" class="form-input"></div>
+                    <div class="form-group"><label class="form-label">Payment Method *</label>
+                    <select name="paymentMethod" class="form-select">
+                        <option>Cash</option><option>UPI</option><option>Bank Transfer</option><option>Cheque</option>
+                    </select></div>
+                    <button type="submit" class="submit-btn red">Add Expense</button>
+                </form></div></div></div>`;
+            }
+            
+            // Add Bank Transaction Modal
+            if (state.modals.addBankTransaction) {
+                html += `<div class="modal-overlay" onclick="closeModal('addBankTransaction')"></div>
+                <div class="modal"><div class="modal-content"><div class="modal-header">
+                <div class="modal-title">Bank Transaction</div>
+                <button class="close-btn" onclick="closeModal('addBankTransaction')">×</button>
+                </div><div class="modal-body">
+                <div class="info-box">💡 Add bank interest earned or bank charges deducted</div>
+                <form onsubmit="addBankTransaction(event)">
+                    <div class="form-group"><label class="form-label">Type *</label>
+                    <select name="type" class="form-select" required>
+                        <option value="Interest">Interest Earned (+)</option>
+                        <option value="Charges">Bank Charges (-)</option>
+                    </select></div>
+                    <div class="form-group"><label class="form-label">Description *</label>
+                    <input type="text" name="description" class="form-input" placeholder="e.g., Monthly interest, Service charge" required></div>
+                    <div class="form-group"><label class="form-label">Amount (₹) *</label>
+                    <input type="number" name="amount" class="form-input" step="0.01" required></div>
+                    <div class="form-group"><label class="form-label">Date *</label>
+                    <input type="date" name="date" class="form-input" value="${getTodayDateString()}" min="2026-09-01" required></div>
+                    <button type="submit" class="submit-btn" style="background: #8b5cf6;">Add Transaction</button>
+                </form>
+                ${state.bankTransactions.length > 0 ? `
+                <div style="margin-top: 20px;">
+                    <div style="font-weight: bold; margin-bottom: 12px;">Recent Transactions</div>
+                    <div class="item-list" style="max-height: 200px;">
+                        ${state.bankTransactions.sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 5).map(txn => `
+                            <div class="item" style="display: flex; justify-content: space-between; align-items: center;">
+                                <div style="flex: 1;">
+                                    <div style="font-weight: 600; font-size: 14px; color: #1f2937;">${txn.description}</div>
+                                    <div style="font-size: 12px; color: #6b7280;">${new Date(txn.date).toLocaleDateString()} • ${txn.type}</div>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span style="font-weight: bold; color: ${txn.type === 'Interest' ? '#10b981' : '#ef4444'};">
+                                        ${txn.type === 'Interest' ? '+' : '-'}₹${txn.amount.toLocaleString()}
+                                    </span>
+                                    <button class="delete-btn" onclick="event.stopPropagation(); deleteBankTransaction(${txn.id})" style="margin: 0;">×</button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>` : ''}
+                </div></div></div>`;
+            }
+            
+            // Add Cash-Bank Transfer Modal
+            if (state.modals.addCashBankTransfer) {
+                html += `<div class="modal-overlay" onclick="closeModal('addCashBankTransfer')"></div>
+                <div class="modal"><div class="modal-content"><div class="modal-header">
+                <div class="modal-title">Cash ↔ Bank Transfer</div>
+                <button class="close-btn" onclick="closeModal('addCashBankTransfer')">×</button>
+                </div><div class="modal-body">
+                <div class="info-box">💡 Deposit cash to bank or withdraw cash from bank</div>
+                <form onsubmit="addCashBankTransfer(event)">
+                    <div class="form-group"><label class="form-label">Transfer Type *</label>
+                    <select name="type" class="form-select" required>
+                        <option value="Deposit">Deposit to Bank (Cash → Bank)</option>
+                        <option value="Withdrawal">Withdraw to Cash (Bank → Cash)</option>
+                    </select></div>
+                    <div class="form-group"><label class="form-label">Description *</label>
+                    <input type="text" name="description" class="form-input" placeholder="e.g., Cash deposit, ATM withdrawal" required></div>
+                    <div class="form-group"><label class="form-label">Amount (₹) *</label>
+                    <input type="number" name="amount" class="form-input" step="0.01" required></div>
+                    <div class="form-group"><label class="form-label">Date *</label>
+                    <input type="date" name="date" class="form-input" value="${getTodayDateString()}" min="2026-09-01" required></div>
+                    <button type="submit" class="submit-btn" style="background: #f59e0b;">Add Transfer</button>
+                </form>
+                ${state.cashBankTransfers.length > 0 ? `
+                <div style="margin-top: 20px;">
+                    <div style="font-weight: bold; margin-bottom: 12px;">Recent Transfers</div>
+                    <div class="item-list" style="max-height: 200px;">
+                        ${state.cashBankTransfers.sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 5).map(txn => `
+                            <div class="item" style="display: flex; justify-content: space-between; align-items: center;">
+                                <div style="flex: 1;">
+                                    <div style="font-weight: 600; font-size: 14px; color: #1f2937;">${txn.description}</div>
+                                    <div style="font-size: 12px; color: #6b7280;">${new Date(txn.date).toLocaleDateString()} • ${txn.type}</div>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span style="font-weight: bold; color: #f59e0b;">₹${txn.amount.toLocaleString()}</span>
+                                    <button class="delete-btn" onclick="event.stopPropagation(); deleteCashBankTransfer(${txn.id})" style="margin: 0;">×</button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>` : ''}
+                </div></div></div>`;
+            }
+            
+            // Extra Charge Modal
+            if (state.modals.extraCharge) {
+                const ec = getExtraChargeForMonth(state.selectedMonth);
+                const monthName = new Date(state.selectedMonth + '-01').toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
+                html += `<div class="modal-overlay" onclick="closeModal('extraCharge')"></div>
+                <div class="modal"><div class="modal-content"><div class="modal-header">
+                <div class="modal-title">✨ Extra Charge — ${monthName}</div>
+                <button class="close-btn" onclick="closeModal('extraCharge')">×</button>
+                </div><div class="modal-body">
+                <div class="info-box">💡 Set a one-time extra amount to collect from <strong>each flat</strong> this month only. This will not affect any other month's maintenance.</div>
+                ${ec ? `<div class="warning-box">⚠️ An extra charge of ₹${ec.amount.toLocaleString()} is already set for this month (${ec.reason || 'No reason given'}). Submitting below will overwrite it.</div>` : ''}
+                <form onsubmit="setExtraCharge(event)">
+                    <div class="form-group"><label class="form-label">Extra Amount per Flat (₹) *</label>
+                    <input type="number" name="extraAmount" class="form-input" step="0.01" min="0" placeholder="e.g. 500" value="${ec ? ec.amount : ''}" required></div>
+                    <div class="form-group"><label class="form-label">Reason / Description *</label>
+                    <input type="text" name="extraReason" class="form-input" placeholder="e.g. Lift repair, Water tank cleaning" value="${ec ? ec.reason : ''}" required></div>
+                    ${state.flats.length > 0 ? `<div class="info-box" style="background:#f0fdf4; border-color:#10b981; color:#065f46;">📊 Total extra to collect from all ${state.flats.length} flats: <strong>₹<span id="extraTotal">${ec ? (ec.amount * state.flats.length).toLocaleString() : '0'}</span></strong></div>` : ''}
+                    <button type="submit" class="submit-btn" style="background: linear-gradient(135deg, #0d9488, #0f766e);">✅ Set Extra Charge</button>
+                    ${ec ? `<button type="button" onclick="removeExtraCharge('${state.selectedMonth}')" style="width:100%; margin-top:12px; padding:12px; border:2px solid #ef4444; background:white; color:#ef4444; border-radius:8px; font-weight:bold; cursor:pointer;">🗑️ Remove Extra Charge</button>` : ''}
+                </form>
+                <script>
+                (function() {
+                    const inp = document.querySelector('input[name="extraAmount"]');
+                    const span = document.getElementById('extraTotal');
+                    if (inp && span) {
+                        inp.addEventListener('input', function() {
+                            const v = parseFloat(this.value) || 0;
+                            span.textContent = (v * ${state.flats.length}).toLocaleString('en-IN');
+                        });
+                    }
+                })();
+                <\/script>
+                </div></div></div>`;
+            }
+            
+            // Edit Expenditure Modal
+            if (state.modals.editExpenditure) {
+                const exp = state.modals.editExpenditure;
+                html += `<div class="modal-overlay" onclick="state.modals.editExpenditure = null; render();"></div>
+                <div class="modal"><div class="modal-content"><div class="modal-header">
+                <div class="modal-title">Edit Expense</div>
+                <button class="close-btn" onclick="state.modals.editExpenditure = null; render();">×</button>
+                </div><div class="modal-body">
+                <form onsubmit="updateExpenditure(event)">
+                    <input type="hidden" name="expId" value="${exp.id}">
+                    <div class="form-group"><label class="form-label">Description *</label>
+                    <input type="text" name="description" class="form-input" value="${exp.description}" required></div>
+                    <div class="form-group"><label class="form-label">Category *</label>
+                    <select name="category" class="form-select">
+                        <option ${exp.category === 'Cleaning' ? 'selected' : ''}>Cleaning</option>
+                        <option ${exp.category === 'Security' ? 'selected' : ''}>Security</option>
+                        <option ${exp.category === 'Repairs' ? 'selected' : ''}>Repairs</option>
+                        <option ${exp.category === 'Electricity' ? 'selected' : ''}>Electricity</option>
+                        <option ${exp.category === 'Water' ? 'selected' : ''}>Water</option>
+                        <option ${exp.category === 'Gardening' ? 'selected' : ''}>Gardening</option>
+                        <option ${exp.category === 'Lift Maintenance' ? 'selected' : ''}>Lift Maintenance</option>
+                        <option ${exp.category === 'Pest Control' ? 'selected' : ''}>Pest Control</option>
+                        <option ${exp.category === 'Others' ? 'selected' : ''}>Others</option>
+                    </select></div>
+                    <div class="form-group"><label class="form-label">Amount (₹) *</label>
+                    <input type="number" name="amount" class="form-input" value="${exp.amount}" step="0.01" required></div>
+                    <div class="form-group"><label class="form-label">Date *</label>
+                    <input type="date" name="date" class="form-input" value="${exp.date}" min="2026-09-01" required></div>
+                    <div class="form-group"><label class="form-label">Vendor</label>
+                    <input type="text" name="vendor" class="form-input" value="${exp.vendor || ''}"></div>
+                    <div class="form-group"><label class="form-label">Payment Method *</label>
+                    <select name="paymentMethod" class="form-select">
+                        <option ${(exp.paymentMethod === 'Cash' || !exp.paymentMethod) ? 'selected' : ''}>Cash</option>
+                        <option ${exp.paymentMethod === 'UPI' ? 'selected' : ''}>UPI</option>
+                        <option ${exp.paymentMethod === 'Bank Transfer' ? 'selected' : ''}>Bank Transfer</option>
+                        <option ${exp.paymentMethod === 'Cheque' ? 'selected' : ''}>Cheque</option>
+                    </select></div>
+                    <button type="submit" class="submit-btn blue">Update Expense</button>
+                </form></div></div></div>`;
+            }
+            
+            return html;
+        }
+        
+        loadData();
+        render();
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('service-worker.js').catch((err) => {
+                    console.error('Service worker registration failed:', err);
+                });
+            });
+        }
+    </script>
+</body>
+</html>
