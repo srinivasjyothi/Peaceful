@@ -529,6 +529,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
 </head>
 <body>
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
     <div id="app"></div>
     <div id="saveIndicator" class="save-indicator hidden">✓ Saved</div>
     
@@ -538,6 +540,92 @@
             const now = new Date().toISOString().slice(0, 7);
             return now < START_MONTH ? START_MONTH : now;
         })();
+
+        // ---- Cloud sync (Firebase Firestore) ----
+        const firebaseConfig = {
+            apiKey: "AIzaSyDYTubjA-77upaHmBsuRjlxE67-dcDcug8",
+            authDomain: "peacemaintenance.firebaseapp.com",
+            projectId: "peacemaintenance",
+            storageBucket: "peacemaintenance.firebasestorage.app",
+            messagingSenderId: "586390773356",
+            appId: "1:586390773356:web:26c034d86aaa6dc15e0249"
+        };
+        let cloudDocRef = null;
+        let cloudEnabled = false;
+        let receivingCloudUpdate = false;
+
+        try {
+            if (typeof firebase !== 'undefined') {
+                firebase.initializeApp(firebaseConfig);
+                firebase.firestore().enablePersistence().catch((err) => {
+                    console.warn('Offline persistence not enabled:', err.code);
+                });
+                cloudDocRef = firebase.firestore().collection('appData').doc('main');
+                cloudEnabled = true;
+            } else {
+                console.warn('Firebase SDK did not load — running in local-only (offline) mode.');
+            }
+        } catch (e) {
+            console.error('Firebase init failed — running in local-only (offline) mode.', e);
+        }
+
+        function pushToCloud() {
+            if (!cloudEnabled) return;
+            cloudDocRef.set({
+                flats: state.flats,
+                expenditures: state.expenditures,
+                bankTransactions: state.bankTransactions,
+                cashBankTransfers: state.cashBankTransfers,
+                extraCharges: state.extraCharges,
+                openingBalances: state.openingBalances,
+                updatedAt: new Date().toISOString()
+            }).then(() => {
+                showSaveIndicator('✓ Saved & Synced', '#10b981');
+            }).catch((error) => {
+                console.error('Cloud save failed:', error);
+                showSaveIndicator('⚠️ Saved locally — cloud sync failed', '#ef4444', 6000);
+            });
+        }
+
+        function initCloudSync() {
+            if (!cloudEnabled) return;
+            let firstSnapshot = true;
+            cloudDocRef.onSnapshot((doc) => {
+                if (doc.exists) {
+                    const data = doc.data();
+                    receivingCloudUpdate = true;
+                    try {
+                        state.flats = data.flats || [];
+                        state.expenditures = data.expenditures || [];
+                        state.bankTransactions = data.bankTransactions || [];
+                        state.cashBankTransfers = data.cashBankTransfers || [];
+                        state.extraCharges = data.extraCharges || {};
+                        state.openingBalances = data.openingBalances || { cash: 0, bank: 0 };
+                        localStorage.setItem('apartmentFlats', JSON.stringify(state.flats));
+                        localStorage.setItem('apartmentExpenditures', JSON.stringify(state.expenditures));
+                        localStorage.setItem('bankTransactions', JSON.stringify(state.bankTransactions));
+                        localStorage.setItem('cashBankTransfers', JSON.stringify(state.cashBankTransfers));
+                        localStorage.setItem('extraCharges', JSON.stringify(state.extraCharges));
+                        localStorage.setItem('openingBalances', JSON.stringify(state.openingBalances));
+                        render();
+                    } catch (err) {
+                        console.error('Error applying cloud update:', err);
+                        showSaveIndicator('⚠️ Cloud update error', '#ef4444', 6000);
+                    } finally {
+                        // Always reset, even if something above threw, so saves never get silently stuck
+                        receivingCloudUpdate = false;
+                    }
+                } else if (firstSnapshot && state.flats.length > 0) {
+                    // First run on this device with existing local data but no cloud copy yet: seed the cloud
+                    pushToCloud();
+                }
+                firstSnapshot = false;
+            }, (error) => {
+                console.error('Cloud sync error:', error);
+                showSaveIndicator('⚠️ Cloud connection error', '#ef4444', 6000);
+            });
+        }
+        // ---- End cloud sync ----
         
         let state = {
             activeTab: 'dashboard',
@@ -572,10 +660,13 @@
             suggestedPaymentAmount: 0
         };
         
-        function showSaveIndicator() {
+        function showSaveIndicator(text, color, duration) {
             const indicator = document.getElementById('saveIndicator');
+            indicator.textContent = text || '✓ Saved';
+            indicator.style.background = color || '#10b981';
             indicator.classList.remove('hidden');
-            setTimeout(() => indicator.classList.add('hidden'), 3000);
+            clearTimeout(window._saveIndicatorTimeout);
+            window._saveIndicatorTimeout = setTimeout(() => indicator.classList.add('hidden'), duration || 3000);
         }
         
         function loadData() {
@@ -609,6 +700,7 @@
                 localStorage.setItem('cashBankTransfers', JSON.stringify(state.cashBankTransfers));
                 localStorage.setItem('extraCharges', JSON.stringify(state.extraCharges));
                 showSaveIndicator();
+                if (!receivingCloudUpdate) pushToCloud();
             } catch (error) {
                 console.error('Error saving data:', error);
                 alert('⚠️ Unable to save data');
@@ -2293,6 +2385,7 @@
         
         loadData();
         render();
+        initCloudSync();
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
