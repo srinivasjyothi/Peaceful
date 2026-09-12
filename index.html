@@ -537,7 +537,7 @@
     <script>
         const START_MONTH = '2026-09';
         const CURRENT_MONTH = (() => {
-            const now = new Date().toISOString().slice(0, 7);
+            const now = toLocalMonthStr(new Date());
             return now < START_MONTH ? START_MONTH : now;
         })();
 
@@ -553,6 +553,7 @@
         let cloudDocRef = null;
         let cloudEnabled = false;
         let receivingCloudUpdate = false;
+        let lastLocalUpdate = localStorage.getItem('lastLocalUpdate') || '';
 
         try {
             if (typeof firebase !== 'undefined') {
@@ -571,6 +572,7 @@
 
         function pushToCloud() {
             if (!cloudEnabled) return;
+            const ts = new Date().toISOString();
             cloudDocRef.set({
                 flats: state.flats,
                 expenditures: state.expenditures,
@@ -578,8 +580,10 @@
                 cashBankTransfers: state.cashBankTransfers,
                 extraCharges: state.extraCharges,
                 openingBalances: state.openingBalances,
-                updatedAt: new Date().toISOString()
+                updatedAt: ts
             }).then(() => {
+                lastLocalUpdate = ts;
+                localStorage.setItem('lastLocalUpdate', ts);
                 showSaveIndicator('✓ Saved & Synced', '#10b981');
             }).catch((error) => {
                 console.error('Cloud save failed:', error);
@@ -593,6 +597,36 @@
             cloudDocRef.onSnapshot((doc) => {
                 if (doc.exists) {
                     const data = doc.data();
+                    const cloudUpdatedAt = data.updatedAt || '';
+
+                    // Safety guard: never let cloud silently overwrite local data that is
+                    // as-new-or-newer than what the cloud has, and never overwrite local
+                    // data we have no timestamp basis for comparing yet.
+                    const localIsUnverifiedButHasData = (lastLocalUpdate === '' && state.flats.length > 0);
+                    const cloudIsNotNewer = (lastLocalUpdate !== '' && cloudUpdatedAt <= lastLocalUpdate);
+                    if (localIsUnverifiedButHasData || cloudIsNotNewer) {
+                        if (localIsUnverifiedButHasData) {
+                            // Establish the cloud baseline from this device's existing local data
+                            pushToCloud();
+                        }
+                        firstSnapshot = false;
+                        return;
+                    }
+
+                    // Cloud is confirmed newer than local — safe to apply.
+                    // Keep one backup of what local had before we overwrite it, just in case.
+                    try {
+                        localStorage.setItem('preCloudOverwriteBackup', JSON.stringify({
+                            flats: state.flats,
+                            expenditures: state.expenditures,
+                            bankTransactions: state.bankTransactions,
+                            cashBankTransfers: state.cashBankTransfers,
+                            extraCharges: state.extraCharges,
+                            openingBalances: state.openingBalances,
+                            savedAt: new Date().toISOString()
+                        }));
+                    } catch (e) { /* backup is best-effort */ }
+
                     receivingCloudUpdate = true;
                     try {
                         state.flats = data.flats || [];
@@ -607,6 +641,8 @@
                         localStorage.setItem('cashBankTransfers', JSON.stringify(state.cashBankTransfers));
                         localStorage.setItem('extraCharges', JSON.stringify(state.extraCharges));
                         localStorage.setItem('openingBalances', JSON.stringify(state.openingBalances));
+                        lastLocalUpdate = cloudUpdatedAt;
+                        localStorage.setItem('lastLocalUpdate', cloudUpdatedAt);
                         render();
                     } catch (err) {
                         console.error('Error applying cloud update:', err);
@@ -616,7 +652,7 @@
                         receivingCloudUpdate = false;
                     }
                 } else if (firstSnapshot && state.flats.length > 0) {
-                    // First run on this device with existing local data but no cloud copy yet: seed the cloud
+                    // First run ever on this account with existing local data but no cloud copy yet: seed the cloud
                     pushToCloud();
                 }
                 firstSnapshot = false;
@@ -708,8 +744,21 @@
         }
         
         function getTodayDateString() {
-            const today = new Date();
-            return today.toISOString().slice(0, 10);
+            return toLocalDateStr(new Date());
+        }
+
+        // Formats a Date using its LOCAL calendar fields (not UTC), so users east of UTC
+        // (e.g. IST, UTC+5:30) don't get "today" or month boundaries shifted back a day.
+        function toLocalDateStr(d) {
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${y}-${m}-${day}`;
+        }
+        function toLocalMonthStr(d) {
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            return `${y}-${m}`;
         }
         
         // NEW: Calculate the balance including current month's demand
@@ -1003,11 +1052,11 @@
             today.setHours(0, 0, 0, 0);
             
             // Min date is the 1st of the selected month
-            const minDate = firstDay.toISOString().slice(0, 10);
+            const minDate = toLocalDateStr(firstDay);
             
             // Max date is the earlier of: last day of month OR today
-            let maxDate = lastDay.toISOString().slice(0, 10);
-            const todayStr = today.toISOString().slice(0, 10);
+            let maxDate = toLocalDateStr(lastDay);
+            const todayStr = toLocalDateStr(today);
             if (maxDate > todayStr) {
                 maxDate = todayStr;
             }
@@ -1111,7 +1160,7 @@
             }
             
             // Validation 4: Cannot collect payment for future months
-            const currentYearMonth = new Date().toISOString().slice(0, 7);
+            const currentYearMonth = toLocalMonthStr(new Date());
             if (selectedMonth > currentYearMonth) {
                 alert('Cannot collect payments for future months. Current month is ' + currentYearMonth);
                 return;
@@ -2158,7 +2207,7 @@
             
             // Add Payment Modal
             if (state.modals.addPayment) {
-                const currentYearMonth = new Date().toISOString().slice(0, 7);
+                const currentYearMonth = toLocalMonthStr(new Date());
                 const paymentDateRange = getDateRangeForMonth(state.paymentMonthForDate);
                 const suggestedAmount = state.suggestedPaymentAmount > 0 ? state.suggestedPaymentAmount : '';
                 html += `<div class="modal-overlay" onclick="closeModal('addPayment')"></div>
