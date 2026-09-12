@@ -1151,10 +1151,9 @@
             }
             
             // Validation 3: Payment date cannot be in the future
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            const paymentDateObj = new Date(paymentDate);
-            if (paymentDateObj > today) {
+            // Compare as plain date strings (YYYY-MM-DD) to avoid timezone parsing mismatches
+            const todayDateStr = getTodayDateString();
+            if (paymentDate > todayDateStr) {
                 alert('Payment date cannot be in the future');
                 return;
             }
